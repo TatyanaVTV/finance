@@ -1,4 +1,4 @@
-package ru.vtvhw.spring.finance.controller;
+package ru.vtvhw.spring.finance.controller.mvc;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;

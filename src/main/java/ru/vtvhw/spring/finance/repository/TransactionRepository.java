@@ -14,6 +14,7 @@ import java.util.UUID;
 public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
     List<Transaction> findByUserIdOrderByDateDesc(UUID userId);
     List<Transaction> findByUserIdAndDateBetweenOrderByDateDesc(UUID userId, LocalDateTime from, LocalDateTime to);
+    boolean existsByCategoryId(UUID categoryId);
 
     @Query("""
         SELECT SUM(t.amount)

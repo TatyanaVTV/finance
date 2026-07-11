@@ -3,45 +3,70 @@
 <head th:replace="~{fragments/header :: head}"></head>
 <body>
 <div th:replace="~{fragments/header :: nav}"></div>
+
 <div class="container mt-4">
     <h1>Генерация отчёта</h1>
+
+    <div id="errorAlert" class="alert alert-danger" style="display:none;"></div>
+
     <form id="reportForm" class="row g-3">
         <div class="col-md-3">
-            <label>Период:</label>
-            <select id="period" name="period" class="form-select">
-                <option th:each="p : ${periods}" th:value="${p}" th:text="${p}"></option>
+            <label for="period" class="form-label">Период</label>
+            <select id="period" class="form-select">
+                <option value="MONTH">Месяц</option>
+                <option value="QUARTER">Квартал</option>
+                <option value="YEAR">Год</option>
             </select>
         </div>
-        <div class="col-md-3">
-            <label>С даты:</label>
-            <input type="datetime-local" id="from" name="from" class="form-control" required>
+
+        <div id="monthFields" class="col-md-3">
+            <label for="month" class="form-label">Месяц</label>
+            <select id="month" class="form-select">
+                <option value="1">Январь</option>
+                <option value="2">Февраль</option>
+                <option value="3">Март</option>
+                <option value="4">Апрель</option>
+                <option value="5">Май</option>
+                <option value="6">Июнь</option>
+                <option value="7">Июль</option>
+                <option value="8">Август</option>
+                <option value="9">Сентябрь</option>
+                <option value="10">Октябрь</option>
+                <option value="11">Ноябрь</option>
+                <option value="12">Декабрь</option>
+            </select>
         </div>
-        <div class="col-md-3">
-            <label>По дату:</label>
-            <input type="datetime-local" id="to" name="to" class="form-control" required>
+
+        <div id="quarterFields" class="col-md-3" style="display:none;">
+            <label for="quarter" class="form-label">Квартал</label>
+            <select id="quarter" class="form-select">
+                <option value="1">1-й квартал</option>
+                <option value="2">2-й квартал</option>
+                <option value="3">3-й квартал</option>
+                <option value="4">4-й квартал</option>
+            </select>
         </div>
+
+        <div class="col-md-3">
+            <label for="year" class="form-label">Год</label>
+            <select id="year" class="form-select"></select>
+        </div>
+
         <div class="col-md-2">
-            <label for="format">Формат:</label>
-            <select id="format" name="format" class="form-select">
+            <label for="format" class="form-label">Формат</label>
+            <select id="format" class="form-select">
                 <option value="PDF">PDF</option>
                 <option value="EXCEL">Excel</option>
             </select>
         </div>
+
         <div class="col-md-1 d-flex align-items-end">
-            <button type="button" class="btn btn-success" onclick="generateReport()">Скачать</button>
+            <button type="button" class="btn btn-success w-100" id="generateBtn">Скачать</button>
         </div>
     </form>
 </div>
-<script>
-    function generateReport() {
-        var period = document.getElementById('period').value;
-        var from = document.getElementById('from').value;
-        var to = document.getElementById('to').value;
-        var format = document.getElementById('format').value;
-        var url = '/api/reports/export?period=' + period + '&from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to) + '&format=' + format;
-        window.location.href = url;
-    }
-</script>
+
+<script src="/js/reports.js"></script>
 <div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>

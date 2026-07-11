@@ -8,9 +8,10 @@
         <h4 class="alert-heading">Ошибка</h4>
         <p th:text="${error} ?: 'Произошла непредвиденная ошибка'"></p>
         <p th:if="${status}" th:text="'Код: ' + ${status}"></p>
-        <p th:if="${timestamp}" th:text="'Время: ' + ${#temporals.format(timestamp, 'dd.MM.yyyy HH:mm:ss')}"></p>
+        <p th:if="${timestamp}" th:text="'Время: ' + ${timestamp}"></p>
         <hr>
         <p class="mb-0">Пожалуйста, попробуйте позже или обратитесь к администратору.</p>
+        <a href="/dashboard" class="btn btn-primary mt-3">На главную</a>
     </div>
 </div>
 <div th:replace="~{fragments/footer :: footer}"></div>

@@ -9,8 +9,9 @@ import java.util.UUID;
 
 public interface CategoryService {
     Category createCategory(String name, TransactionType type, UUID userId);
+    Category updateCategory(UUID id, String newName, UUID userId);
+    void deleteCategory(UUID id, UUID userId);
     List<CategoryDto> getCategoriesByUser(UUID userId);
     List<CategoryDto> getCategoriesByUserAndType(UUID userId, TransactionType type);
     Category getById(UUID id);
-    void deleteCategory(UUID id, UUID userId);
 }

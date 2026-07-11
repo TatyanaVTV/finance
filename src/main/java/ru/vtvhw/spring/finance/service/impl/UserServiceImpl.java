@@ -9,16 +9,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.vtvhw.spring.finance.entity.User;
 import ru.vtvhw.spring.finance.repository.UserRepository;
-import ru.vtvhw.spring.finance.service.CategoryService;
 import ru.vtvhw.spring.finance.service.UserService;
 
 import java.util.Optional;
 import java.util.UUID;
 
 import static java.lang.String.format;
-import static ru.vtvhw.spring.finance.enums.TransactionType.EXPENSE;
-import static ru.vtvhw.spring.finance.enums.TransactionType.INCOME;
+import static org.apache.logging.log4j.util.Strings.isBlank;
 import static ru.vtvhw.spring.finance.exception.ResourceNotFoundException.userNotFound;
+import static ru.vtvhw.spring.finance.exception.ValidationException.*;
 
 @Service
 @RequiredArgsConstructor
@@ -26,11 +25,6 @@ import static ru.vtvhw.spring.finance.exception.ResourceNotFoundException.userNo
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final CategoryService categoryService;
-
-    private static final String[] DEFAULT_INCOME_CATEGORIES = {"Зарплата", "Фриланс", "Подарки", "Инвестиции"};
-    private static final String[] DEFAULT_EXPENSE_CATEGORIES = {"Продукты", "Транспорт", "Коммунальные", "Развлечения",
-            "Здоровье", "Одежда", "Образование", "Другое"};
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -56,9 +50,28 @@ public class UserServiceImpl implements UserService {
                 .build();
         var saved = userRepository.save(user);
         log.info("Created new user with id: {}", saved.getId());
-
-        createDefaultCategories(saved);
         return saved;
+    }
+
+    @Override
+    @Transactional
+    public User updateUser(UUID id, String newName, String newEmail) {
+        var user = getById(id);
+        if (isBlank(newName)) {
+            throw emptyUserName();
+        }
+        if (isBlank(newEmail)) {
+            throw emptyEmail();
+        }
+        var existing = userRepository.findByEmail(newEmail);
+        if (existing.isPresent() && !existing.get().getId().equals(id)) {
+            throw emailAlreadyExists(newEmail);
+        }
+        user.setName(newName);
+        user.setEmail(newEmail);
+        var updated = userRepository.save(user);
+        log.info("User updated: id={}, newName={}, newEmail={}", updated.getId(), updated.getName(), updated.getEmail());
+        return updated;
     }
 
     @Override
@@ -82,16 +95,6 @@ public class UserServiceImpl implements UserService {
                     log.warn("User not found by email: {}", email);
                     return userNotFound(email);
                 });
-    }
-
-    private void createDefaultCategories(User user) {
-        for (String catName : DEFAULT_INCOME_CATEGORIES) {
-            categoryService.createCategory(catName, INCOME, user.getId());
-        }
-        for (String catName : DEFAULT_EXPENSE_CATEGORIES) {
-            categoryService.createCategory(catName, EXPENSE, user.getId());
-        }
-        log.info("Default categories created for user {}", user.getId());
     }
 
 }

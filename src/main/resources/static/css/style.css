@@ -1,3 +1,4 @@
+/* ---------- Базовые стили и каркас ---------- */
 body {
     background-color: #f4f9f4;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -8,15 +9,24 @@ body {
 main {
     flex: 1;
 }
+
+/* ---------- Навигация ---------- */
 .navbar {
     background-color: #2e7d32 !important; /* тёмно-зелёный */
 }
-.navbar-brand, .navbar-nav .nav-link {
+.navbar-brand,
+.navbar-nav .nav-link {
     color: #ffffff !important;
 }
 .navbar-nav .nav-link:hover {
     color: #c8e6c9 !important;
 }
+/* Управление отображением меню (резерв для Bootstrap) */
+.collapse.show {
+    display: block !important;
+}
+
+/* ---------- Компоненты (карточки, кнопки, таблицы, футер) ---------- */
 .card {
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
@@ -38,4 +48,127 @@ main {
 }
 .footer .text-muted {
     color: #c8e6c9 !important;
+}
+
+/* ---------- Цветовые классы для типов ---------- */
+.income-type {
+    color: darkgreen;
+    font-weight: bold;
+}
+.expense-type {
+    color: darkred;
+    font-weight: bold;
+}
+.unknown-type {
+    color: gray;
+}
+
+/* ---------- Таблица транзакций ---------- */
+#transactionTable {
+    table-layout: fixed;
+    width: 100%;
+}
+#transactionTable td,
+#transactionTable th {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0.3rem 0.4rem;
+    vertical-align: middle;
+}
+/* Фиксированная ширина колонок */
+#transactionTable th:nth-child(1),
+#transactionTable td:nth-child(1) { width: 10%; } /* сумма */
+#transactionTable th:nth-child(2),
+#transactionTable td:nth-child(2) { width: 10%; } /* тип */
+#transactionTable th:nth-child(3),
+#transactionTable td:nth-child(3) { width: 20%; } /* категория */
+#transactionTable th:nth-child(4),
+#transactionTable td:nth-child(4) { width: 20%; } /* дата */
+#transactionTable th:nth-child(5),
+#transactionTable td:nth-child(5) { width: 35%; } /* описание */
+#transactionTable th:nth-child(6),
+#transactionTable td:nth-child(6) { width: 5%; } /* действия */
+
+/* ---------- Кнопки-иконки (общие) ---------- */
+.edit-btn,
+.delete-btn,
+.save-edit-btn,
+.cancel-edit-btn,
+.delete-category-btn {
+    background: transparent !important;
+    border: none !important;
+    padding: 0.25rem 0.5rem !important;
+    border-radius: 0.25rem !important;
+    transition: background-color 0.15s, outline 0.15s;
+    line-height: 1;
+}
+.edit-btn,
+.save-edit-btn {
+    color: #0d6efd !important;
+}
+.delete-btn,
+.delete-category-btn {
+    color: #dc3545 !important;
+}
+.cancel-edit-btn {
+    color: #6c757d !important;
+}
+.edit-btn:hover,
+.save-edit-btn:hover {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+    outline: 1px solid #0d6efd !important;
+}
+.delete-btn:hover,
+.delete-category-btn:hover {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    outline: 1px solid #dc3545 !important;
+}
+.cancel-edit-btn:hover {
+    background-color: rgba(108, 117, 125, 0.1) !important;
+    outline: 1px solid #6c757d !important;
+}
+
+/* ---------- Кнопки-иконки для категорий (с чуть меньшим отступом) ---------- */
+.edit-category-btn,
+.delete-category-btn {
+    background: transparent !important;
+    border: none !important;
+    padding: 0.25rem 0.25rem !important;
+    transition: background-color 0.15s, outline 0.15s;
+    line-height: 1;
+}
+.edit-category-btn {
+    color: #0d6efd !important;
+}
+.delete-category-btn {
+    color: #dc3545 !important;
+}
+.edit-category-btn:hover {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+    outline: 1px solid #0d6efd !important;
+}
+.delete-category-btn:hover {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    outline: 1px solid #dc3545 !important;
+}
+
+/* ---------- Поля ввода в режиме редактирования ---------- */
+.edit-input {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 0.2rem 0.3rem !important;
+    font-size: 0.875rem !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 0.25rem !important;
+    background-color: #fff !important;
+    height: calc(1.5em + 0.4rem) !important;
+    line-height: 1.5 !important;
+    min-width: 0 !important;
+}
+#editTemplate td {
+    padding: 0.2rem 0.3rem !important;
+}
+#editTemplate td:last-child {
+    text-align: center !important;
 }

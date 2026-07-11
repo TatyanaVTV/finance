@@ -2,15 +2,13 @@ package ru.vtvhw.spring.finance.exception;
 
 import ru.vtvhw.spring.finance.enums.TransactionType;
 
+import java.util.UUID;
+
 import static java.lang.String.format;
 
 public class ValidationException extends RuntimeException {
     private ValidationException(String message) {
         super(message);
-    }
-
-    private ValidationException(String message, Throwable cause) {
-        super(message, cause);
     }
 
     public static ValidationException invalidAmount() {
@@ -33,5 +31,25 @@ public class ValidationException extends RuntimeException {
         return new ValidationException(
                 String.format("Тип категории (%s) не соответствует типу транзакции (%s)", categoryType, transactionType)
         );
+    }
+
+    public static ValidationException categoryHasTransactions(UUID categoryId) {
+        return new ValidationException(
+                String.format("Невозможно удалить категорию (ID: %s), так как существуют транзакции, ссылающиеся на неё. Сначала переназначьте или удалите эти транзакции.", categoryId)
+        );
+    }
+
+    public static ValidationException emptyCategoryName() {
+        return new ValidationException("Название категории не может быть пустым");
+    }
+
+    public static ValidationException emptyUserName() {
+        return new ValidationException("Имя не может быть пустым");
+    }
+    public static ValidationException emptyEmail() {
+        return new ValidationException("Email не может быть пустым");
+    }
+    public static ValidationException emailAlreadyExists(String email) {
+        return new ValidationException(format("Пользователь с email '%s' уже существует", email));
     }
 }

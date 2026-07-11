@@ -37,7 +37,7 @@ public class ReportServiceImpl implements ReportService {
 
         var totalIncome = getTotalIncome(transactions);
         var totalExpense = getTotalExpense(transactions);
-        var balance = totalIncome.subtract(totalExpense);
+        var balance = totalIncome.add(totalExpense);
 
         var content = String.format("Отчет за период %s - %s. Доходы: %s, Расходы: %s, Баланс: %s",
                 start, end, totalIncome, totalExpense, balance);

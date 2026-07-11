@@ -56,7 +56,8 @@ public class TransactionServiceImpl implements TransactionService {
         setTransactionDate(entity, dto);
 
         var saved = transactionRepository.save(entity);
-        log.info("Transaction created: id={}, amount={}, type={}", saved.getId(), saved.getAmount(), saved.getType());
+        log.info("Transaction created: id={}, amount={}, type={}, category={}, date={}",
+                saved.getId(), saved.getAmount(), saved.getType(), saved.getCategory(), saved.getDate());
         return saved;
     }
 
@@ -94,17 +95,29 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<TransactionDto> getTransactionsForUser(UUID userId, LocalDateTime from, LocalDateTime to) {
-        if (nonNull(from) && nonNull(to) && from.isAfter(to)) {
+        if (isNull(from) && isNull(to)) {
+            var now = LocalDateTime.now();
+            from = now.minusMonths(1);
+            to = now;
+        } else if (isNull(from)) {
+            from = to.minusMonths(1);
+        } else if (isNull(to)) {
+            to = from.plusMonths(1);
+        } else if (from.isAfter(to)) {
             throw invalidDateRange();
         }
+
         var transactions = transactionRepository.findByUserIdAndDateBetweenOrderByDateDesc(userId, from, to);
+        log.info("Getting transactions for user: from={}, to={}", from, to);
         return transactions.stream()
                 .map(transactionMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public TransactionDto getTransactionById(UUID id, UUID userId) {
         var transaction = getTransactionOrThrow(id);
         validateTransactionOwnership(transaction, userId, id);
@@ -118,6 +131,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<TransactionDto> getAllTransactionsForUser(UUID userId) {
         var transactions = transactionRepository.findByUserIdOrderByDateDesc(userId);
         return transactions.stream()
@@ -153,12 +167,15 @@ public class TransactionServiceImpl implements TransactionService {
 
     private BigDecimal normalizeAndValidateAmount(TransactionDto dto) {
         var amount = dto.getAmount();
-        if (dto.getType() == EXPENSE && amount.compareTo(ZERO) < 0) {
-            amount = amount.negate();
-            dto.setAmount(amount);
-        }
-        if (amount.compareTo(ZERO) <= 0) {
-            throw invalidAmount();
+        if (dto.getType() == EXPENSE) {
+            if (amount.compareTo(ZERO) > 0) {
+                amount = amount.negate();
+                dto.setAmount(amount);
+            }
+        } else {
+            if (amount.compareTo(ZERO) <= 0) {
+                throw invalidAmount();
+            }
         }
         return amount;
     }

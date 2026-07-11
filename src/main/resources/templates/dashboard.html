@@ -3,8 +3,10 @@
 <head th:replace="~{fragments/header :: head}"></head>
 <body>
 <div th:replace="~{fragments/header :: nav}"></div>
+
 <div class="container mt-4">
     <h1>Дашборд</h1>
+
     <div class="row">
         <div class="col-md-4">
             <div class="card text-white bg-success mb-3">
@@ -31,6 +33,7 @@
             </div>
         </div>
     </div>
+
     <div class="row">
         <div class="col-md-8">
             <canvas id="chart" width="400" height="200"></canvas>
@@ -39,19 +42,21 @@
             <h5>Последние транзакции</h5>
             <ul class="list-group">
                 <li class="list-group-item" th:each="t : ${transactions}">
-                    <span th:text="${#temporals.format(t.date, 'dd.MM.yyyy HH:mm:ss')}"></span> -
+                    <span th:text="${#temporals.format(t.date, 'dd.MM.yyyy HH:mm')}"></span>:
                     <span th:text="${t.amount}"></span>
-                    (<span th:switch="${t.type}">
-            <span th:case="'INCOME'" style="color: darkgreen; font-weight: bold;">Доход</span>
-            <span th:case="'EXPENSE'" style="color: darkred; font-weight: bold;">Расход</span>
-        </span>)
+                    (<span th:if="${t.type != null}"
+                           th:text="${t.type.value}"
+                           th:class="${t.type.name() == 'INCOME'} ? 'income-type' : 'expense-type'"></span>
+                    <span th:unless="${t.type != null}" class="unknown-type">—</span>)
                 </li>
             </ul>
         </div>
     </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="/js/dashboard.js"></script>
+
 <div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>

@@ -1,8 +1,10 @@
-package ru.vtvhw.spring.finance.controller;
+package ru.vtvhw.spring.finance.controller.mvc;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +20,7 @@ import ru.vtvhw.spring.finance.service.TransactionService;
 import ru.vtvhw.spring.finance.service.UserService;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
@@ -49,7 +51,7 @@ public class FinanceController {
 
         var income = transactionService.getTotalAmount(user.getId(), INCOME, startOfMonth, endOfMonth);
         var expense = transactionService.getTotalAmount(user.getId(), EXPENSE, startOfMonth, endOfMonth);
-        var balance = income.subtract(expense);
+        var balance = income.add(expense);
         var transactions = transactionService.getTransactionsForUser(user.getId(), startOfMonth, endOfMonth);
 
         model.addAttribute("income", income);
@@ -116,7 +118,20 @@ public class FinanceController {
     @GetMapping("/categories")
     public String categories(Authentication auth, Model model) {
         var user = userService.getByEmail(auth.getName());
-        model.addAttribute("categories", categoryService.getCategoriesByUser(user.getId()));
+        var allCategories = categoryService.getCategoriesByUser(user.getId());
+
+        var incomeCategories = allCategories.stream()
+                .filter(c -> c.getType() == INCOME)
+                .sorted(Comparator.comparing(CategoryDto::getName))
+                .toList();
+
+        var expenseCategories = allCategories.stream()
+                .filter(c -> c.getType() == EXPENSE)
+                .sorted(Comparator.comparing(CategoryDto::getName))
+                .toList();
+
+        model.addAttribute("incomeCategories", incomeCategories);
+        model.addAttribute("expenseCategories", expenseCategories);
         return "categories";
     }
 
@@ -130,6 +145,34 @@ public class FinanceController {
         return "profile";
     }
 
+    @PostMapping("/profile")
+    public String updateProfile(Authentication auth,
+                                @RequestParam String name,
+                                @RequestParam String email,
+                                Model model) {
+        var user = userService.getByEmail(auth.getName());
+        try {
+            userService.updateUser(user.getId(), name, email);
+
+            // После успешного обновления обновляем SecurityContext
+            SecurityContextHolder.getContext().setAuthentication(
+                    new UsernamePasswordAuthenticationToken(
+                            userService.loadUserByUsername(email),
+                            null,
+                            userService.loadUserByUsername(email).getAuthorities()
+                    )
+            );
+
+            return "redirect:/profile?updated";
+        } catch (ValidationException e) {
+            model.addAttribute("error", e.getMessage());
+            model.addAttribute("user", user);
+            model.addAttribute("name", name);
+            model.addAttribute("email", email);
+            return "profile";
+        }
+    }
+
     private void prepareCreationErrorModel(Model model, String errorMessage,
                                            List<TransactionDto> transactions,
                                            List<CategoryDto> categories,
@@ -138,8 +181,8 @@ public class FinanceController {
         model.addAttribute("error", errorMessage);
         model.addAttribute("transactions", transactions);
         model.addAttribute("categories", categories);
-        model.addAttribute("newTransaction", dto);
         model.addAttribute("formattedDate", formattedDate);
+        model.addAttribute("newTransaction", dto);
     }
 
     private LocalDateTime formatDate(String date) {
@@ -148,7 +191,8 @@ public class FinanceController {
         if (!isBlank(date)) {
             try {
                 formattedDate = LocalDateTime.parse(date, ISO_LOCAL_DATE_TIME);
-            } catch (Exception ignore) {}
+            } catch (Exception ignore) {
+            }
         }
 
         return formattedDate;

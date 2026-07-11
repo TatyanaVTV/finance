@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    // ----- Вспомогательные функции -----
-
+    // ----- Фильтрация категорий -----
     function filterCategoriesByType(type) {
         return categories.filter(c => c.type === type);
     }
@@ -20,24 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function formatDateForInput(dateStr) {
-        if (!dateStr) return '';
-        var date = new Date(dateStr);
-        if (isNaN(date)) return '';
-        var year = date.getFullYear();
-        var month = String(date.getMonth() + 1).padStart(2, '0');
-        var day = String(date.getDate()).padStart(2, '0');
-        var hours = String(date.getHours()).padStart(2, '0');
-        var minutes = String(date.getMinutes()).padStart(2, '0');
-        return year + '-' + month + '-' + day + 'T' + hours + ':' + minutes;
-    }
-
-    function getTypeFromText(typeText) {
-        return typeText === 'Доход' ? 'INCOME' : 'EXPENSE';
-    }
-
     // ----- Форма добавления -----
-
     var addTypeSelect = document.getElementById('addType');
     var addCategorySelect = document.getElementById('addCategory');
 
@@ -45,23 +27,13 @@ document.addEventListener('DOMContentLoaded', function() {
         var selectedType = addTypeSelect.value;
         var filtered = filterCategoriesByType(selectedType);
         populateCategorySelect(addCategorySelect, filtered);
-        // Устанавливаем выбранную категорию из модели (если есть)
         if (selectedCategoryId) {
             addCategorySelect.value = selectedCategoryId;
-            // Проверяем, что выбранная категория соответствует типу
-            var cat = categories.find(c => c.id === selectedCategoryId);
-            if (cat && cat.type !== selectedType) {
-                addCategorySelect.value = '';
-            }
         }
     }
-
-    // Инициализация
     updateAddCategories();
-
     addTypeSelect.addEventListener('change', function() {
         updateAddCategories();
-        // Если выбранная категория не подходит под новый тип, сброс
         var currentVal = addCategorySelect.value;
         if (currentVal) {
             var cat = categories.find(c => c.id === currentVal);
@@ -71,141 +43,175 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // ----- Inline редактирование -----
+    // ----- Редактирование -----
+    function formatDateForInput(dateStr) {
+        if (!dateStr) return '';
+        // Если строка содержит 'Z' (UTC), обрезаем до 16 символов
+        if (dateStr.includes('Z')) {
+            return dateStr.substring(0, 16);
+        }
+        // Если строка уже в формате YYYY-MM-DDTHH:mm:ss, берём первые 16 символов
+        if (dateStr.includes('T')) {
+            return dateStr.substring(0, 16);
+        }
+        // Иначе парсим как Date
+        const d = new Date(dateStr);
+        if (isNaN(d)) return '';
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
 
     function enableEditing(row) {
         const id = row.dataset.id;
+        const transaction = transactionsData.find(t => t.id === id);
+        if (!transaction) {
+            alert('Транзакция не найдена');
+            return;
+        }
+
         const editRow = document.getElementById('editTemplate').cloneNode(true);
         editRow.style.display = '';
         editRow.id = 'editRow-' + id;
-        editRow.querySelector('.save-edit-btn').dataset.id = id;
+        const saveBtn = editRow.querySelector('.save-edit-btn');
+        saveBtn.dataset.id = id;
         editRow.querySelector('.cancel-edit-btn').dataset.id = id;
 
-        // Чтение текущих значений
-        const displayDate = row.querySelector('.display-date').textContent.trim();
-        const displayCategory = row.querySelector('.display-category').textContent.trim();
-        const displayTypeText = row.querySelector('.display-type').textContent.trim(); // "Доход" или "Расход"
-        const displayAmount = row.querySelector('.display-amount').textContent.trim();
-        const displayDescription = row.querySelector('.display-description').textContent.trim();
-
-        // Тип в INCOME/EXPENSE
-        var typeValue = getTypeFromText(displayTypeText);
-
-        // Устанавливаем значения
-        var dateInput = editRow.querySelector('.edit-date');
-        var formattedDate = formatDateForInput(displayDate);
-        dateInput.value = formattedDate || '';
-
-        var amountInput = editRow.querySelector('.edit-amount');
-        amountInput.value = displayAmount;
-
-        var descInput = editRow.querySelector('.edit-description');
-        descInput.value = displayDescription;
-
-        var typeSelect = editRow.querySelector('.edit-type');
-        typeSelect.value = typeValue;
-
-        // Заполняем категории по типу
-        var categorySelect = editRow.querySelector('.edit-category');
-        var filtered = filterCategoriesByType(typeValue);
+        editRow.querySelector('.edit-amount').value = transaction.amount || '';
+        const typeSelect = editRow.querySelector('.edit-type');
+        typeSelect.value = transaction.type || 'INCOME';
+        const categorySelect = editRow.querySelector('.edit-category');
+        const filtered = filterCategoriesByType(transaction.type);
         populateCategorySelect(categorySelect, filtered);
-
-        // Устанавливаем выбранную категорию по имени
         Array.from(categorySelect.options).forEach(opt => {
-            if (opt.text === displayCategory) {
+            if (opt.text === transaction.categoryName) {
                 opt.selected = true;
             }
         });
+        const dateInput = editRow.querySelector('.edit-date');
+        dateInput.value = transaction.date ? formatDateForInput(transaction.date) : '';
+        editRow.querySelector('.edit-description').value = transaction.description || '';
 
-        // Слушатель изменения типа в редактируемой строке
+        // При изменении типа обновляем категории
         typeSelect.addEventListener('change', function() {
-            var newType = this.value;
-            var filteredNew = filterCategoriesByType(newType);
-            var catSelect = this.closest('tr').querySelector('.edit-category');
+            const newType = this.value;
+            const filteredNew = filterCategoriesByType(newType);
+            const catSelect = this.closest('tr').querySelector('.edit-category');
             populateCategorySelect(catSelect, filteredNew);
-            // Если выбранная категория не соответствует новому типу, сбрасываем
-            var currentCat = catSelect.value;
+            const currentCat = catSelect.value;
             if (currentCat) {
-                var cat = categories.find(c => c.id === currentCat);
+                const cat = categories.find(c => c.id === currentCat);
                 if (cat && cat.type !== newType) {
                     catSelect.value = '';
                 }
             }
         });
 
-        // Заменяем строку
         row.replaceWith(editRow);
     }
 
     // ----- Обработчики -----
-
-    // Редактирование
     document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('edit-btn')) {
-            const row = e.target.closest('.transaction-row');
-            if (row) {
-                enableEditing(row);
-            }
+        const editBtn = e.target.closest('.edit-btn');
+        if (!editBtn) return;
+        const row = editBtn.closest('.transaction-row');
+        if (!row) return;
+        const id = row.dataset.id;
+        if (!id) {
+            alert('ID транзакции не найден');
+            return;
         }
+        enableEditing(row);
     });
 
-    // Сохранение
+    // Сохранить
     document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('save-edit-btn')) {
-            const editRow = e.target.closest('tr');
-            const id = e.target.dataset.id;
+        const saveBtn = e.target.closest('.save-edit-btn');
+        if (!saveBtn) return;
+        const editRow = saveBtn.closest('tr');
+        const id = saveBtn.dataset.id;
 
-            const dateVal = editRow.querySelector('.edit-date').value;
-            const categoryId = editRow.querySelector('.edit-category').value;
-            const type = editRow.querySelector('.edit-type').value;
-            const amount = editRow.querySelector('.edit-amount').value;
-            const description = editRow.querySelector('.edit-description').value;
-
-            const payload = {
-                amount: parseFloat(amount),
-                type: type,
-                categoryId: categoryId || null,
-                date: dateVal ? new Date(dateVal).toISOString() : null,
-                description: description
-            };
-
-            fetch('/api/transactions/' + id, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            })
-                .then(response => {
-                    if (response.ok) {
-                        location.reload();
-                    } else {
-                        response.json().then(err => alert('Ошибка: ' + err.error));
-                    }
-                })
-                .catch(err => alert('Ошибка: ' + err));
+        // Удаляем предыдущее сообщение об ошибке
+        const errorDiv = editRow.querySelector('.edit-error');
+        if (errorDiv) {
+            errorDiv.textContent = '';
+            errorDiv.style.display = 'none';
         }
+
+        const amount = editRow.querySelector('.edit-amount').value;
+        const type = editRow.querySelector('.edit-type').value;
+        const categoryId = editRow.querySelector('.edit-category').value;
+        const dateVal = editRow.querySelector('.edit-date').value;
+        const description = editRow.querySelector('.edit-description').value;
+
+        const payload = {
+            amount: parseFloat(amount),
+            type: type,
+            categoryId: categoryId || null,
+            date: dateVal ? dateVal : null,
+            description: description
+        };
+
+        fetch('/api/transactions/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    return response.text().then(text => {
+                        let errorMsg = 'Ошибка при обновлении';
+                        try {
+                            const json = JSON.parse(text);
+                            errorMsg = json.error || json.message || errorMsg;
+                        } catch (e) {
+                            errorMsg = text || errorMsg;
+                        }
+                        throw new Error(errorMsg);
+                    });
+                }
+            })
+            .catch(err => {
+                if (errorDiv) {
+                    errorDiv.textContent = err.message;
+                    errorDiv.style.display = 'block';
+                } else {
+                    // fallback – alert, если вдруг нет блока
+                    alert(err.message);
+                }
+            });
     });
 
     // Отмена
     document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('cancel-edit-btn')) {
-            location.reload();
-        }
+        const cancelBtn = e.target.closest('.cancel-edit-btn');
+        if (!cancelBtn) return;
+        location.reload();
     });
 
-    // Удаление
+    // Удалить
     document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('delete-btn')) {
-            const id = e.target.dataset.id;
-            if (confirm('Вы уверены, что хотите удалить эту транзакцию?')) {
-                fetch('/api/transactions/' + id, { method: 'DELETE' })
-                    .then(response => {
-                        if (response.ok) {
-                            location.reload();
-                        } else {
-                            alert('Ошибка при удалении');
-                        }
-                    });
-            }
+        const deleteBtn = e.target.closest('.delete-btn');
+        if (!deleteBtn) return;
+        const id = deleteBtn.dataset.id;
+        if (!id) {
+            alert('ID транзакции не найден');
+            return;
+        }
+        if (confirm('Вы уверены, что хотите удалить эту транзакцию?')) {
+            fetch('/api/transactions/' + id, { method: 'DELETE' })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('Ошибка при удалении');
+                    }
+                });
         }
     });
 
