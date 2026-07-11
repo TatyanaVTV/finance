@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head th:replace="~{fragments/header :: head}"></head>
+<body>
+<div th:replace="~{fragments/header :: nav}"></div>
+<div class="container mt-4">
+    <h1>Категории</h1>
+    <ul class="list-group">
+        <li class="list-group-item" th:each="cat : ${categories}">
+            <span th:text="${cat.name}"></span> (<span th:text="${cat.type}"></span>)
+        </li>
+    </ul>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

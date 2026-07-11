@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head th:replace="~{fragments/header :: head}"></head>
+<body>
+<div th:replace="~{fragments/header :: nav}"></div>
+<div class="container mt-5">
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Ошибка</h4>
+        <p th:text="${error} ?: 'Произошла непредвиденная ошибка'"></p>
+        <p th:if="${status}" th:text="'Код: ' + ${status}"></p>
+        <p th:if="${timestamp}" th:text="'Время: ' + ${#temporals.format(timestamp, 'dd.MM.yyyy HH:mm:ss')}"></p>
+        <hr>
+        <p class="mb-0">Пожалуйста, попробуйте позже или обратитесь к администратору.</p>
+    </div>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

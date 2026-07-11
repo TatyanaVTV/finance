@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head th:replace="~{fragments/header :: head}"></head>
+<body>
+<div th:replace="~{fragments/header :: nav}"></div>
+<div class="container mt-4">
+    <h1>Профиль</h1>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title" th:text="${user.name}"></h5>
+            <p class="card-text" th:text="${user.email}"></p>
+        </div>
+    </div>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

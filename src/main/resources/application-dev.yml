@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5437/finance_db
+    username: admin
+    password: admin
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+
+security:
+  csrf:
+    disabled: true
+
+logging:
+  level:
+    ru.vtvhw.spring.finance: DEBUG

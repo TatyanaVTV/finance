@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head th:replace="~{fragments/header :: head}"></head>
+<body>
+<div th:replace="~{fragments/header :: nav}"></div>
+<div class="container mt-4">
+    <h1>Генерация отчёта</h1>
+    <form id="reportForm" class="row g-3">
+        <div class="col-md-3">
+            <label>Период:</label>
+            <select id="period" name="period" class="form-select">
+                <option th:each="p : ${periods}" th:value="${p}" th:text="${p}"></option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label>С даты:</label>
+            <input type="datetime-local" id="from" name="from" class="form-control" required>
+        </div>
+        <div class="col-md-3">
+            <label>По дату:</label>
+            <input type="datetime-local" id="to" name="to" class="form-control" required>
+        </div>
+        <div class="col-md-2">
+            <label for="format">Формат:</label>
+            <select id="format" name="format" class="form-select">
+                <option value="PDF">PDF</option>
+                <option value="EXCEL">Excel</option>
+            </select>
+        </div>
+        <div class="col-md-1 d-flex align-items-end">
+            <button type="button" class="btn btn-success" onclick="generateReport()">Скачать</button>
+        </div>
+    </form>
+</div>
+<script>
+    function generateReport() {
+        var period = document.getElementById('period').value;
+        var from = document.getElementById('from').value;
+        var to = document.getElementById('to').value;
+        var format = document.getElementById('format').value;
+        var url = '/api/reports/export?period=' + period + '&from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to) + '&format=' + format;
+        window.location.href = url;
+    }
+</script>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
