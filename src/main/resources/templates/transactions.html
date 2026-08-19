@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head th:replace="~{fragments/header :: head}"></head>
+<body>
+<div th:replace="~{fragments/header :: nav}"></div>
+
+<div class="container mt-4">
+    <h1>Транзакции</h1>
+
+    <div th:if="${error}" class="alert alert-danger mt-3" th:text="${error}"></div>
+
+    <form th:action="@{/transactions}" method="post" th:object="${newTransaction}">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-2">
+                <label for="amount" class="form-label">Сумма</label>
+                <input type="number" step="0.01" th:field="*{amount}" class="form-control" id="amount" placeholder="Сумма" required>
+            </div>
+            <div class="col-md-2">
+                <label for="addType" class="form-label">Тип</label>
+                <select th:field="*{type}" class="form-select" id="addType">
+                    <option value="INCOME">Доход</option>
+                    <option value="EXPENSE">Расход</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="addCategory" class="form-label">Категория</label>
+                <select th:field="*{categoryId}" class="form-select" id="addCategory"></select>
+            </div>
+            <div class="col-md-2">
+                <label for="addDate" class="form-label">Дата</label>
+                <input type="datetime-local" class="form-control" id="addDate" name="date" th:value="${formattedDate}">
+            </div>
+            <div class="col-md-2">
+                <label for="addDesc" class="form-label">Описание</label>
+                <input type="text" th:field="*{description}" class="form-control" id="addDesc" placeholder="Описание" required>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-success w-100">Добавить</button>
+            </div>
+        </div>
+    </form>
+
+    <table class="table table-striped mt-3">
+        <colgroup>
+            <col style="width: 10%;">
+            <col style="width: 10%;">
+            <col style="width: 20%;">
+            <col style="width: 20%;">
+            <col style="width: 30%;">
+            <col style="width: 10%;">
+        </colgroup>
+        <thead>
+        <tr>
+            <th>Сумма</th>
+            <th>Тип</th>
+            <th>Категория</th>
+            <th>Дата</th>
+            <th>Описание</th>
+            <th>Действия</th>
+        </tr>
+        </thead>
+        <tbody id="transactionTableBody">
+        <tr th:each="t : ${transactions}" th:data-id="${t.id}" class="transaction-row">
+            <td class="display-amount" th:text="${t.amount}"></td>
+            <td class="display-type">
+                <span th:if="${t.type != null}"
+                      th:text="${t.type.value}"
+                      th:class="${t.type.name() == 'INCOME'} ? 'income-type' : 'expense-type'"></span>
+                <span th:unless="${t.type != null}" class="unknown-type">—</span>
+            </td>
+            <td class="display-category" th:text="${t.categoryName}"></td>
+            <td class="display-date" th:text="${#temporals.format(t.date, 'dd.MM.yyyy HH:mm')}"></td>
+            <td class="display-description" th:text="${t.description}"></td>
+            <td>
+                <button class="btn btn-sm btn-primary edit-btn" th:data-id="${t.id}">
+                    <img src="/images/pen-solid-full.svg" alt="Редактировать" width="18" height="18">
+                </button>
+                <button class="btn btn-sm btn-danger delete-btn" th:data-id="${t.id}">
+                    <img src="/images/trash-can-solid-full.svg" alt="Удалить" width="18" height="18">
+                </button>
+            </td>
+        </tr>
+        <!-- Шаблон редактирования -->
+        <tr id="editTemplate" style="display:none;">
+            <td><input type="number" step="0.01" class="edit-input edit-amount" placeholder="Сумма"></td>
+            <td>
+                <select class="edit-input edit-type">
+                    <option value="INCOME">Доход</option>
+                    <option value="EXPENSE">Расход</option>
+                </select>
+            </td>
+            <td>
+                <select class="edit-input edit-category"></select>
+            </td>
+            <td><input type="datetime-local" class="edit-input edit-date"></td>
+            <td><input type="text" class="edit-input edit-description" placeholder="Описание"></td>
+            <td>
+                <div>
+                    <button class="btn btn-sm btn-success save-edit-btn" data-id="">
+                        <img src="/images/floppy-disk-solid-full.svg" alt="Сохранить" width="18" height="18">
+                    </button>
+                    <button class="btn btn-sm btn-secondary cancel-edit-btn">
+                        <img src="/images/ban-solid-full.svg" alt="Отмена" width="18" height="18">
+                    </button>
+                </div>
+                <div class="edit-error" style="color: #dc3545; font-size: 0.9em; margin-top: 5px; display: none;"></div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<script th:inline="javascript">
+    var categories = /*[[${categories}]]*/ [];
+    var selectedCategoryId = /*[[${newTransaction != null ? newTransaction.categoryId : null}]]*/ null;
+    var transactionsData = /*[[${transactions}]]*/ [];
+</script>
+<script src="/js/transactions.js"></script>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

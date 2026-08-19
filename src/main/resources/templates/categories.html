@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head th:replace="~{fragments/header :: head}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body>
+<div th:replace="~{fragments/header :: nav}"></div>
+
+<div class="container mt-4">
+    <h1>Категории</h1>
+
+    <div id="errorAlert" class="alert alert-danger" style="display:none;"></div>
+    <div id="successAlert" class="alert alert-success" style="display:none;"></div>
+
+    <div class="row">
+        <!-- Категории доходов -->
+        <div class="col-md-6">
+            <h4 style="color: darkgreen;">Доходы</h4>
+            <div class="input-group mb-3">
+                <input type="text" id="newIncomeCategory" class="form-control" placeholder="Название категории">
+                <button class="btn btn-success add-category-btn" data-type="INCOME">Добавить</button>
+            </div>
+            <ul id="incomeCategoriesList" class="list-group">
+                <li th:each="cat : ${incomeCategories}" th:data-id="${cat.id}" class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="category-name" th:text="${cat.name}"></span>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary edit-category-btn" th:data-id="${cat.id}">
+                            <img src="/images/pen-solid-full.svg" alt="Редактировать" width="18" height="18">
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger delete-category-btn" th:data-id="${cat.id}">
+                            <img src="/images/trash-can-solid-full.svg" alt="Удалить" width="18" height="18">
+                        </button>
+                    </div>
+                </li>
+                <li th:if="${#lists.isEmpty(incomeCategories)}" class="list-group-item text-muted">Нет категорий доходов</li>
+            </ul>
+        </div>
+
+        <!-- Категории расходов -->
+        <div class="col-md-6">
+            <h4 style="color: darkred;">Расходы</h4>
+            <div class="input-group mb-3">
+                <input type="text" id="newExpenseCategory" class="form-control" placeholder="Название категории">
+                <button class="btn btn-success add-category-btn" data-type="EXPENSE">Добавить</button>
+            </div>
+            <ul id="expenseCategoriesList" class="list-group">
+                <li th:each="cat : ${expenseCategories}" th:data-id="${cat.id}" class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="category-name" th:text="${cat.name}"></span>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary edit-category-btn" th:data-id="${cat.id}">
+                            <img src="/images/pen-solid-full.svg" alt="Редактировать" width="18" height="18">
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger delete-category-btn" th:data-id="${cat.id}">
+                            <img src="/images/trash-can-solid-full.svg" alt="Удалить" width="18" height="18">
+                        </button>
+                    </div>
+                </li>
+                <li th:if="${#lists.isEmpty(expenseCategories)}" class="list-group-item text-muted">Нет категорий расходов</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script src="/js/categories.js"></script>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

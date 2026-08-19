@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head th:replace="~{fragments/header :: head}"></head>
+<body>
+<div th:replace="~{fragments/header :: nav}"></div>
+
+<div class="container mt-4">
+    <h1>Профиль</h1>
+
+    <div th:if="${param.updated}" class="alert alert-success">
+        Профиль успешно обновлён
+    </div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <!-- Режим просмотра -->
+            <div id="viewMode">
+                <p><strong>Имя:</strong> <span th:text="${user.name}"></span></p>
+                <p><strong>Email:</strong> <span th:text="${user.email}"></span></p>
+                <button class="btn btn-primary" id="editProfileBtn">Редактировать</button>
+            </div>
+
+            <!-- Режим редактирования (скрыт) -->
+            <div id="editMode" style="display: none;">
+                <form th:action="@{/profile}" method="post" id="profileForm">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Имя</label>
+                        <input type="text" class="form-control" id="name" name="name"
+                               th:value="${user.name}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email"
+                               th:value="${user.email}" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">Сохранить</button>
+                    <button type="button" class="btn btn-secondary" id="cancelEditBtn">Отмена</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('editProfileBtn').addEventListener('click', function() {
+        document.getElementById('viewMode').style.display = 'none';
+        document.getElementById('editMode').style.display = 'block';
+    });
+    document.getElementById('cancelEditBtn').addEventListener('click', function() {
+        document.getElementById('editMode').style.display = 'none';
+        document.getElementById('viewMode').style.display = 'block';
+        // Возвращаем исходные значения
+        document.getElementById('name').value = /*[[${user.name}]]*/ '';
+        document.getElementById('email').value = /*[[${user.email}]]*/ '';
+    });
+</script>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
