@@ -1,4 +1,4 @@
-package ru.vtvhw.spring.finance.dto;
+package ru.vtvhw.spring.finance.dto.user;
 
 import lombok.Data;
 import java.util.UUID;
