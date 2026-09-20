@@ -7,6 +7,7 @@ import ru.vtvhw.spring.finance.entity.User;
 import ru.vtvhw.spring.finance.enums.TransactionType;
 import ru.vtvhw.spring.finance.exception.ResourceNotFoundException;
 import ru.vtvhw.spring.finance.exception.ValidationException;
+import ru.vtvhw.spring.finance.repository.CategoryRepository;
 
 import java.util.UUID;
 
@@ -16,6 +17,7 @@ import static ru.vtvhw.spring.finance.enums.TransactionType.INCOME;
 public abstract class CategoryServiceTest {
 
     protected CategoryService categoryService;
+    protected CategoryRepository categoryRepository;
 
     protected User user;
     protected UUID userId;
@@ -23,7 +25,9 @@ public abstract class CategoryServiceTest {
     protected UUID categoryId;
 
     protected abstract void initService();
+
     protected abstract void createTransactionForCategory(UUID userId, UUID categoryId, TransactionType type);
+
     protected abstract User createTestUser();
 
     @BeforeEach

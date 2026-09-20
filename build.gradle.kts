@@ -37,6 +37,8 @@ dependencies {
     // Database
     implementation("org.postgresql:postgresql")
     testImplementation("com.h2database:h2")
+    implementation("org.flywaydb:flyway-core")
+    implementation("org.flywaydb:flyway-database-postgresql")
 
     // Lombok
     compileOnly("org.projectlombok:lombok")
