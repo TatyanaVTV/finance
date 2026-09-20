@@ -2,7 +2,7 @@ package ru.vtvhw.spring.finance.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ru.vtvhw.spring.finance.dto.TransactionDto;
+import ru.vtvhw.spring.finance.dto.transaction.TransactionDto;
 import ru.vtvhw.spring.finance.entity.Category;
 import ru.vtvhw.spring.finance.entity.User;
 import ru.vtvhw.spring.finance.enums.TransactionType;

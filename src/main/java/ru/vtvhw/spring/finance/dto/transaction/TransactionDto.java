@@ -1,4 +1,4 @@
-package ru.vtvhw.spring.finance.dto;
+package ru.vtvhw.spring.finance.dto.transaction;
 
 import lombok.Data;
 import ru.vtvhw.spring.finance.enums.TransactionType;

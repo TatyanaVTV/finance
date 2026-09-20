@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    // Обработчик добавления категории
+    // ----- Добавление категории -----
     document.querySelectorAll('.add-category-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
             const type = this.dataset.type;
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Обработчик удаления категории
+    // ----- Удаление категории -----
     document.addEventListener('click', function(e) {
         const deleteBtn = e.target.closest('.delete-category-btn');
         if (!deleteBtn) return;
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(err => showError(err.message));
     });
 
-    // Обработчик редактирования категории
+    // ----- Редактирование категории -----
     document.addEventListener('click', function(e) {
         const editBtn = e.target.closest('.edit-category-btn');
         if (!editBtn) return;
@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Функции для показа сообщений
+    // ----- Показ сообщений -----
     function showError(message) {
         const alert = document.getElementById('errorAlert');
         if (alert) {
@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => { alert.style.display = 'none'; }, 3000);
     }
 
-    // Функции для разбора ответа об ошибке ----------
+    // ----- Разбора ответа об ошибке -----
     function extractErrorMessage(text) {
         try {
             const json = JSON.parse(text);

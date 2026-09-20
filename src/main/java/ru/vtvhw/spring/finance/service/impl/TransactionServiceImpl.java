@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.vtvhw.spring.finance.dto.TransactionDto;
+import ru.vtvhw.spring.finance.dto.transaction.TransactionDto;
 import ru.vtvhw.spring.finance.entity.Category;
 import ru.vtvhw.spring.finance.entity.Transaction;
 import ru.vtvhw.spring.finance.entity.User;

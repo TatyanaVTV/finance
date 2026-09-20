@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import ru.vtvhw.spring.finance.dto.category.CategoryResponse;
-import ru.vtvhw.spring.finance.dto.TransactionDto;
+import ru.vtvhw.spring.finance.dto.transaction.TransactionDto;
 import ru.vtvhw.spring.finance.enums.ReportPeriod;
 import ru.vtvhw.spring.finance.exception.ValidationException;
 import ru.vtvhw.spring.finance.service.CategoryService;

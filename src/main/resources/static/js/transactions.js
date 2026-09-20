@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
         enableEditing(row);
     });
 
-    // Сохранить
+    // ----- Сохранить -----
     document.addEventListener('click', function(e) {
         const saveBtn = e.target.closest('.save-edit-btn');
         if (!saveBtn) return;
@@ -187,14 +187,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     });
 
-    // Отмена
+    // ----- Отменить -----
     document.addEventListener('click', function(e) {
         const cancelBtn = e.target.closest('.cancel-edit-btn');
         if (!cancelBtn) return;
         location.reload();
     });
 
-    // Удалить
+    // ----- Удалить -----
     document.addEventListener('click', function(e) {
         const deleteBtn = e.target.closest('.delete-btn');
         if (!deleteBtn) return;

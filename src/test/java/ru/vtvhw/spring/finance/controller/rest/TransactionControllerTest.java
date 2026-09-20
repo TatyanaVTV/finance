@@ -7,7 +7,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.vtvhw.spring.finance.dto.TransactionDto;
+import ru.vtvhw.spring.finance.dto.transaction.CreateTransactionRequest;
+import ru.vtvhw.spring.finance.dto.transaction.TransactionDto;
+import ru.vtvhw.spring.finance.dto.transaction.UpdateTransactionRequest;
 import ru.vtvhw.spring.finance.entity.Transaction;
 import ru.vtvhw.spring.finance.entity.User;
 import ru.vtvhw.spring.finance.exception.ResourceNotFoundException;
@@ -23,8 +25,7 @@ import java.util.UUID;
 import static java.math.BigDecimal.TEN;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -33,7 +34,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static ru.vtvhw.spring.finance.enums.TransactionType.INCOME;
 import static ru.vtvhw.spring.finance.exception.FinanceSecurityException.transactionNotBelongToUser;
 import static ru.vtvhw.spring.finance.exception.ResourceNotFoundException.transactionNotFound;
-import static ru.vtvhw.spring.finance.exception.ValidationException.emptyDescription;
 
 @WebMvcTest(TransactionController.class)
 @WithMockUser(username = "test@example.com")
@@ -78,12 +78,15 @@ public class TransactionControllerTest {
         transactionDto.setType(INCOME);
         transactionDto.setDate(LocalDateTime.now());
         transactionDto.setDescription("Test");
+
+        when(transactionMapper.toDto(any(CreateTransactionRequest.class))).thenReturn(transactionDto);
+        when(transactionMapper.toDto(any(UpdateTransactionRequest.class))).thenReturn(transactionDto);
     }
 
     @Test
-    void getTransactions_WithoutParams_ShouldUseDefaultPeriod() throws Exception {
+    void getTransactions_WithoutParams_ReturnsAllForDefaultPeriod() throws Exception {
         when(userService.getByEmail("test@example.com")).thenReturn(user);
-        when(transactionService.getTransactionsForUser(eq(userId), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(transactionService.getTransactionsForUser(eq(userId), isNull(), isNull()))
                 .thenReturn(List.of(transactionDto));
 
         mockMvc.perform(get("/api/transactions"))
@@ -131,11 +134,7 @@ public class TransactionControllerTest {
     }
 
     @Test
-    void addTransaction_ValidationException_ShouldReturnBadRequest() throws Exception {
-        when(userService.getByEmail("test@example.com")).thenReturn(user);
-        doThrow(emptyDescription())
-                .when(transactionService).createTransaction(any(TransactionDto.class));
-
+    void addTransaction_EmptyDescription_ReturnsBadRequest() throws Exception {
         var json = """
                 {
                     "amount": 10,
@@ -149,7 +148,10 @@ public class TransactionControllerTest {
                         .content(json)
                         .with(csrf()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Описание не может быть пустым"));
+                .andExpect(jsonPath("$.error").value("Некорректные параметры запроса"))
+                .andExpect(jsonPath("$.fields.description").value("Описание обязательно"));
+
+        verify(transactionService, never()).createTransaction(any());
     }
 
     @Test

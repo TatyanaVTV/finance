@@ -42,7 +42,7 @@
         return `${parts[2]}-${parts[1]}-${parts[0]}`;
     }
 
-    // Обработчик генерации
+    // ----- Генерация отчёта -----
     document.getElementById('generateBtn').addEventListener('click', function() {
         const period = periodSelect.value;
         let month = null, quarter = null;

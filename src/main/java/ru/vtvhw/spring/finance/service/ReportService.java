@@ -1,6 +1,6 @@
 package ru.vtvhw.spring.finance.service;
 
-import ru.vtvhw.spring.finance.dto.TransactionDto;
+import ru.vtvhw.spring.finance.dto.transaction.TransactionDto;
 import ru.vtvhw.spring.finance.entity.Report;
 import ru.vtvhw.spring.finance.entity.User;
 import ru.vtvhw.spring.finance.enums.ReportPeriod;
