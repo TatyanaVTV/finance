@@ -16,6 +16,8 @@ import ru.vtvhw.spring.finance.service.CategoryService;
 import java.util.List;
 import java.util.UUID;
 
+import static java.util.Objects.isNull;
+import static org.apache.logging.log4j.util.Strings.isBlank;
 import static ru.vtvhw.spring.finance.exception.FinanceSecurityException.categoryNotBelongToUser;
 import static ru.vtvhw.spring.finance.exception.ResourceNotFoundException.categoryNotFound;
 import static ru.vtvhw.spring.finance.exception.ResourceNotFoundException.userNotFound;
@@ -38,6 +40,9 @@ public class CategoryServiceImpl implements CategoryService {
                     log.error("User not found for category creation: {}", userId);
                     return userNotFound(userId);
                 });
+        if (isBlank(name)) {
+            throw emptyCategoryName();
+        }
 
         if (categoryRepository.existsByNameAndUserId(name, userId)) {
             throw categoryAlreadyExists(name);
@@ -59,6 +64,9 @@ public class CategoryServiceImpl implements CategoryService {
         var category = getById(id);
         if (!category.getUser().getId().equals(userId)) {
             throw categoryNotBelongToUser(id, userId);
+        }
+        if (isBlank(newName)) {
+            throw emptyCategoryName();
         }
         // Проверка уникальности для этого пользователя
         if (categoryRepository.existsByNameAndUserIdAndIdNot(newName, userId, id)) {

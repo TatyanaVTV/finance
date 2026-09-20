@@ -4,9 +4,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import ru.vtvhw.spring.finance.exception.*;
 
 import java.util.LinkedHashMap;
@@ -53,12 +55,36 @@ public class RestExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
         var fields = new LinkedHashMap<String, String>();
+
         ex.getBindingResult().getFieldErrors().forEach(err ->
-                fields.put(err.getField(), err.getDefaultMessage())
-        );
+                fields.putIfAbsent(err.getField(), err.getDefaultMessage()));
+
+        // Классовые constraint-ошибки
+        ex.getBindingResult().getGlobalErrors().forEach(err ->
+                fields.putIfAbsent("form", err.getDefaultMessage()));
+
+        log.warn("REST validation error: {}", fields);
         return ResponseEntity.badRequest().body(Map.of(
                 "error", "Некорректные параметры запроса",
                 "fields", fields
+        ));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<Map<String, String>> handleMissingParam(MissingServletRequestParameterException ex) {
+        log.warn("Missing request parameter: {}", ex.getParameterName());
+        return ResponseEntity.badRequest().body(Map.of(
+                "error", "Отсутствует обязательный параметр: " + ex.getParameterName()
+        ));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        log.warn("Invalid value for parameter {}: {}", ex.getName(), ex.getValue());
+        var message = "Некорректное значение параметра '" + ex.getName() + "': " + ex.getValue();
+        return ResponseEntity.badRequest().body(Map.of(
+                "error", "Некорректные параметры запроса",
+                "fields", Map.of(ex.getName(), message)
         ));
     }
 

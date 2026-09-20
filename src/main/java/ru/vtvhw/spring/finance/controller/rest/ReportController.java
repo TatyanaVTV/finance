@@ -1,15 +1,14 @@
 package ru.vtvhw.spring.finance.controller.rest;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import ru.vtvhw.spring.finance.dto.report.ReportExportRequest;
 import ru.vtvhw.spring.finance.enums.ExportFormat;
 import ru.vtvhw.spring.finance.enums.ReportPeriod;
 import ru.vtvhw.spring.finance.service.ExportService;
@@ -43,14 +42,11 @@ public class ReportController {
      */
     @GetMapping("/export")
     public ResponseEntity<byte[]> exportReport(Authentication auth,
-                                               @RequestParam ReportPeriod period,
-                                               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-                                               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
-                                               @RequestParam ExportFormat format) throws Exception {
-
-        if (from.isAfter(to)) {
-            throw invalidDateRange();
-        }
+                                               @Valid @ModelAttribute ReportExportRequest request) throws Exception {
+        var period = request.getPeriod();
+        var from = request.getFrom();
+        var to = request.getTo();
+        var format = request.getFormat();
 
         var user = userService.getByEmail(auth.getName());
         var transactions = transactionService.getTransactionsForUser(user.getId(), from, to);
