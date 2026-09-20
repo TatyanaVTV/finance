@@ -111,6 +111,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Cacheable(value = "categoriesByUser", key = "#userId")
     public List<CategoryResponse> getCategoriesByUser(UUID userId) {
+        log.info("Getting all categories for userId={}", userId);
         return categoryRepository.findByUserId(userId).stream()
                 .map(categoryMapper::toResponse)
                 .toList();
@@ -119,6 +120,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Cacheable(value = "categoriesByUserAndType", key = "#userId + ':' + #type")
     public List<CategoryResponse> getCategoriesByUserAndType(UUID userId, TransactionType type) {
+        log.info("Getting all categories for userId={}, type={}", userId, type);
         return categoryRepository.findByUserIdAndType(userId, type).stream()
                 .map(categoryMapper::toResponse)
                 .toList();
