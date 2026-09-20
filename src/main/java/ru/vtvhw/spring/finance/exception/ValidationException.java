@@ -39,10 +39,6 @@ public class ValidationException extends RuntimeException {
         );
     }
 
-    public static ValidationException emptyCategoryName() {
-        return new ValidationException("Название категории не может быть пустым");
-    }
-
     public static ValidationException emptyUserName() {
         return new ValidationException("Имя не может быть пустым");
     }

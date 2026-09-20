@@ -6,7 +6,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.vtvhw.spring.finance.dto.CategoryDto;
+import ru.vtvhw.spring.finance.dto.category.CategoryResponse;
 import ru.vtvhw.spring.finance.dto.TransactionDto;
 import ru.vtvhw.spring.finance.entity.Transaction;
 import ru.vtvhw.spring.finance.entity.User;
@@ -145,8 +145,8 @@ public class FinanceControllerTest {
     @Test
     void categories_ShouldReturnCategoriesView() throws Exception {
         when(userService.getByEmail("test@example.com")).thenReturn(user);
-        var incomeCategory = CategoryDto.builder().id(UUID.randomUUID()).name("Salary").type(INCOME).build();
-        var expenseCategory = CategoryDto.builder().id(UUID.randomUUID()).name("Food").type(EXPENSE).build();
+        var incomeCategory = CategoryResponse.builder().id(UUID.randomUUID()).name("Salary").type(INCOME).build();
+        var expenseCategory = CategoryResponse.builder().id(UUID.randomUUID()).name("Food").type(EXPENSE).build();
         when(categoryService.getCategoriesByUser(userId)).thenReturn(List.of(incomeCategory, expenseCategory));
 
         mockMvc.perform(get("/categories"))

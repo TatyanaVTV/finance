@@ -6,7 +6,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.vtvhw.spring.finance.dto.CategoryDto;
+import ru.vtvhw.spring.finance.dto.category.CategoryResponse;
 import ru.vtvhw.spring.finance.entity.Category;
 import ru.vtvhw.spring.finance.entity.User;
 import ru.vtvhw.spring.finance.mapper.CategoryMapper;
@@ -16,8 +16,7 @@ import ru.vtvhw.spring.finance.service.UserService;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -47,13 +46,14 @@ public class CategoryControllerTest {
     private final UUID categoryId = UUID.randomUUID();
     private final User user = User.builder().id(userId).name("Test User").email("test@example.com").build();
     private final Category category = Category.builder().id(categoryId).name("Salary").type(INCOME).user(user).build();
-    private final CategoryDto categoryDto = CategoryDto.builder().id(categoryId).name("Salary").type(INCOME).userId(userId).build();
+    private final CategoryResponse categoryResponse = CategoryResponse.builder().id(categoryId).name("Salary").type(INCOME).userId(userId).build();
+    private final String TOO_LONG_NAME = "a".repeat(51);
 
     @Test
     void createCategory_Success() throws Exception {
         when(userService.getByEmail("test@example.com")).thenReturn(user);
         when(categoryService.createCategory("Salary", INCOME, userId)).thenReturn(category);
-        when(categoryMapper.toDto(category)).thenReturn(categoryDto);
+        when(categoryMapper.toResponse(category)).thenReturn(categoryResponse);
 
         mockMvc.perform(post("/api/categories")
                         .contentType(APPLICATION_JSON)
@@ -84,7 +84,7 @@ public class CategoryControllerTest {
     void updateCategory_Success() throws Exception {
         when(userService.getByEmail("test@example.com")).thenReturn(user);
         when(categoryService.updateCategory(eq(categoryId), eq("New Name"), eq(userId))).thenReturn(category);
-        when(categoryMapper.toDto(category)).thenReturn(categoryDto);
+        when(categoryMapper.toResponse(category)).thenReturn(categoryResponse);
 
         mockMvc.perform(put("/api/categories/{id}", categoryId)
                         .contentType(APPLICATION_JSON)
@@ -96,17 +96,37 @@ public class CategoryControllerTest {
     }
 
     @Test
-    void updateCategory_EmptyName_ThrowsValidationException() throws Exception {
+    void updateCategory_EmptyName_ReturnsBadRequest() throws Exception {
         when(userService.getByEmail("test@example.com")).thenReturn(user);
-        doThrow(emptyCategoryName())
-                .when(categoryService).updateCategory(eq(categoryId), eq(""), eq(userId));
 
         mockMvc.perform(put("/api/categories/{id}", categoryId)
                         .contentType(APPLICATION_JSON)
                         .content("{\"name\":\"\"}")
                         .with(csrf()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Название категории не может быть пустым"));
+                .andExpect(jsonPath("$.error")
+                        .value("Некорректные параметры запроса"))
+                .andExpect(jsonPath("$.fields.name")
+                        .value("Новое название обязательно"));
+
+        verify(categoryService, never()).updateCategory(any(), any(), any());
+    }
+
+    @Test
+    void updateCategory_TooBigName_ReturnsBadRequest() throws Exception {
+        when(userService.getByEmail("test@example.com")).thenReturn(user);
+
+        mockMvc.perform(put("/api/categories/{id}", categoryId)
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"name\":\"%s\"}".formatted(TOO_LONG_NAME))
+                        .with(csrf()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error")
+                        .value("Некорректные параметры запроса"))
+                .andExpect(jsonPath("$.fields.name")
+                        .value("Новое название должно содержать не более 50 символов"));
+
+        verify(categoryService, never()).updateCategory(any(), any(), any());
     }
 
     @Test

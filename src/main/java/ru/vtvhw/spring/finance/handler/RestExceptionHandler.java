@@ -3,11 +3,13 @@ package ru.vtvhw.spring.finance.handler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 import ru.vtvhw.spring.finance.exception.*;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.springframework.core.Ordered.HIGHEST_PRECEDENCE;
@@ -46,6 +48,18 @@ public class RestExceptionHandler {
     public ResponseEntity<Map<String, String>> handleFinanceException(FinanceException ex) {
         log.error("Finance exception: {}", ex.getMessage());
         return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
+        var fields = new LinkedHashMap<String, String>();
+        ex.getBindingResult().getFieldErrors().forEach(err ->
+                fields.put(err.getField(), err.getDefaultMessage())
+        );
+        return ResponseEntity.badRequest().body(Map.of(
+                "error", "Некорректные параметры запроса",
+                "fields", fields
+        ));
     }
 
     @ExceptionHandler(Exception.class)

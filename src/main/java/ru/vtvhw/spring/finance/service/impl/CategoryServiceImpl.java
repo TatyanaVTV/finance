@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.vtvhw.spring.finance.dto.CategoryDto;
+import ru.vtvhw.spring.finance.dto.category.CategoryResponse;
 import ru.vtvhw.spring.finance.entity.Category;
 import ru.vtvhw.spring.finance.enums.TransactionType;
 import ru.vtvhw.spring.finance.mapper.CategoryMapper;
@@ -16,7 +16,6 @@ import ru.vtvhw.spring.finance.service.CategoryService;
 import java.util.List;
 import java.util.UUID;
 
-import static org.apache.logging.log4j.util.Strings.isBlank;
 import static ru.vtvhw.spring.finance.exception.FinanceSecurityException.categoryNotBelongToUser;
 import static ru.vtvhw.spring.finance.exception.ResourceNotFoundException.categoryNotFound;
 import static ru.vtvhw.spring.finance.exception.ResourceNotFoundException.userNotFound;
@@ -61,9 +60,6 @@ public class CategoryServiceImpl implements CategoryService {
         if (!category.getUser().getId().equals(userId)) {
             throw categoryNotBelongToUser(id, userId);
         }
-        if (isBlank(newName)) {
-            throw emptyCategoryName();
-        }
         // Проверка уникальности для этого пользователя
         if (categoryRepository.existsByNameAndUserIdAndIdNot(newName, userId, id)) {
             throw categoryAlreadyExists(newName);
@@ -91,16 +87,16 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public List<CategoryDto> getCategoriesByUser(UUID userId) {
+    public List<CategoryResponse> getCategoriesByUser(UUID userId) {
         return categoryRepository.findByUserId(userId).stream()
-                .map(categoryMapper::toDto)
+                .map(categoryMapper::toResponse)
                 .toList();
     }
 
     @Override
-    public List<CategoryDto> getCategoriesByUserAndType(UUID userId, TransactionType type) {
+    public List<CategoryResponse> getCategoriesByUserAndType(UUID userId, TransactionType type) {
         return categoryRepository.findByUserIdAndType(userId, type).stream()
-                .map(categoryMapper::toDto)
+                .map(categoryMapper::toResponse)
                 .toList();
     }
 

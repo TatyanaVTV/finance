@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import ru.vtvhw.spring.finance.dto.CategoryDto;
+import ru.vtvhw.spring.finance.dto.category.CategoryResponse;
 import ru.vtvhw.spring.finance.dto.TransactionDto;
 import ru.vtvhw.spring.finance.enums.ReportPeriod;
 import ru.vtvhw.spring.finance.exception.ValidationException;
@@ -122,12 +122,12 @@ public class FinanceController {
 
         var incomeCategories = allCategories.stream()
                 .filter(c -> c.getType() == INCOME)
-                .sorted(Comparator.comparing(CategoryDto::getName))
+                .sorted(Comparator.comparing(CategoryResponse::getName))
                 .toList();
 
         var expenseCategories = allCategories.stream()
                 .filter(c -> c.getType() == EXPENSE)
-                .sorted(Comparator.comparing(CategoryDto::getName))
+                .sorted(Comparator.comparing(CategoryResponse::getName))
                 .toList();
 
         model.addAttribute("incomeCategories", incomeCategories);
@@ -175,7 +175,7 @@ public class FinanceController {
 
     private void prepareCreationErrorModel(Model model, String errorMessage,
                                            List<TransactionDto> transactions,
-                                           List<CategoryDto> categories,
+                                           List<CategoryResponse> categories,
                                            TransactionDto dto) {
         var formattedDate = isNull(dto.getDate()) ? "" : dto.getDate().format(ISO_LOCAL_DATE_TIME);
         model.addAttribute("error", errorMessage);
