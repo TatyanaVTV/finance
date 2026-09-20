@@ -10,7 +10,7 @@
             <h2 class="text-center">Регистрация</h2>
             <form th:action="@{/register}" th:object="${registerForm}" method="post">
                 <div class="mb-3">
-                    <label for="name" class="form-label">Имя</label>
+                    <label for="name" class="form-label">Имя пользователя</label>
                     <input type="text" id="name" th:field="*{name}" class="form-control"
                            th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'">
                     <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}"

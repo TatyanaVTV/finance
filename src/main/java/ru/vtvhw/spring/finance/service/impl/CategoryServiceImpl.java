@@ -2,6 +2,9 @@ package ru.vtvhw.spring.finance.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.vtvhw.spring.finance.dto.category.CategoryResponse;
@@ -33,6 +36,10 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "categoriesByUser", key = "#userId"),
+            @CacheEvict(value = "categoriesByUserAndType", allEntries = true)
+    })
     public Category createCategory(String name, TransactionType type, UUID userId) {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> {
@@ -59,6 +66,10 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "categoriesByUser", key = "#userId"),
+            @CacheEvict(value = "categoriesByUserAndType", allEntries = true)
+    })
     public Category updateCategory(UUID id, String newName, UUID userId) {
         var category = getById(id);
         if (!category.getUser().getId().equals(userId)) {
@@ -79,6 +90,10 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "categoriesByUser", key = "#userId"),
+            @CacheEvict(value = "categoriesByUserAndType", allEntries = true)
+    })
     public void deleteCategory(UUID categoryId, UUID userId) {
         var category = getById(categoryId);
         if (!category.getUser().getId().equals(userId)) {
@@ -94,6 +109,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Cacheable(value = "categoriesByUser", key = "#userId")
     public List<CategoryResponse> getCategoriesByUser(UUID userId) {
         return categoryRepository.findByUserId(userId).stream()
                 .map(categoryMapper::toResponse)
@@ -101,6 +117,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Cacheable(value = "categoriesByUserAndType", key = "#userId + ':' + #type")
     public List<CategoryResponse> getCategoriesByUserAndType(UUID userId, TransactionType type) {
         return categoryRepository.findByUserIdAndType(userId, type).stream()
                 .map(categoryMapper::toResponse)

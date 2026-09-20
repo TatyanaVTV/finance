@@ -45,7 +45,7 @@ public class AuthControllerTest {
     // Все метки <= 63, локальная часть = 64 (граница RFC), общая длина > 150
     private static final String TOO_LONG_EMAIL =
             "a".repeat(64) + "@" + "b".repeat(51) + "." + "c".repeat(30) + ".com"; // 151
-    private static final String TOO_LONG_PSWD = "a".repeat(101);
+    private static final String TOO_LONG_PSWD = "a".repeat(65);
 
     @Autowired
     private MockMvc mockMvc;
@@ -179,7 +179,7 @@ public class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("register"))
                 .andExpect(model().attributeHasFieldErrors(REGISTER_FORM_ATTR, "password"))
-                .andExpect(hasFieldError("password", "Пароль должен содержать от 6 до 100 символов"));
+                .andExpect(hasFieldError("password", "Пароль должен содержать от 6 до 64 символов"));
 
         verify(userService, never()).createUser(any(), any(), any());
     }

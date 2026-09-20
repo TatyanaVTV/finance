@@ -17,7 +17,8 @@ public class RegisterUserRequest {
     @Size(max = 150, message = "Email не должен превышать 150 символов")
     private String email;
 
+    // BCrypt обрезает пароль на 72 байтах. Ограничиваем 64 символами с запасом.
     @NotBlank(message = "Пароль обязателен")
-    @Size(min = 6, max = 100, message = "Пароль должен содержать от 6 до 100 символов")
+    @Size(min = 6, max = 64, message = "Пароль должен содержать от 6 до 64 символов")
     private String password;
 }

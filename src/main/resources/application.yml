@@ -12,6 +12,10 @@ spring:
   jackson:
     serialization:
       fail-on-empty-beans: false
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=10m
   datasource:
     driver-class-name: org.postgresql.Driver
   thymeleaf:

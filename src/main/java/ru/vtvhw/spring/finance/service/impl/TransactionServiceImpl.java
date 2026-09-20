@@ -2,6 +2,8 @@ package ru.vtvhw.spring.finance.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.vtvhw.spring.finance.dto.transaction.TransactionDto;
@@ -42,6 +44,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "totals", allEntries = true)
     public Transaction createTransaction(TransactionDto dto) {
         var user = getUserOrThrow(dto.getUserId());
 
@@ -63,6 +66,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "totals", allEntries = true)
     public Transaction updateTransaction(UUID id, TransactionDto dto) {
         var existing = getTransactionOrThrow(id);
         validateTransactionOwnership(existing, dto.getUserId(), id);
@@ -87,6 +91,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "totals", allEntries = true)
     public void deleteTransaction(UUID id, UUID userId) {
         var transaction = getTransactionOrThrow(id);
         validateTransactionOwnership(transaction, userId, id);
@@ -125,6 +130,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    @Cacheable(value = "totals", key = "#userId + ':' + #type + ':' + #from + ':' + #to")
     public BigDecimal getTotalAmount(UUID userId, TransactionType type, LocalDateTime from, LocalDateTime to) {
         var sum = transactionRepository.sumAmountByUserAndTypeAndDateRange(userId, type, from, to);
         return sum != null ? sum : ZERO;

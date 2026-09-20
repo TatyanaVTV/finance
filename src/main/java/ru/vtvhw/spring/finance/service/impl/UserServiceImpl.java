@@ -96,5 +96,4 @@ public class UserServiceImpl implements UserService {
                     return userNotFound(email);
                 });
     }
-
 }
