@@ -3,14 +3,15 @@ package ru.vtvhw.spring.finance.controller.rest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import ru.vtvhw.spring.finance.dto.report.ReportExportRequest;
 import ru.vtvhw.spring.finance.enums.ExportFormat;
-import ru.vtvhw.spring.finance.enums.ReportPeriod;
 import ru.vtvhw.spring.finance.service.ExportService;
 import ru.vtvhw.spring.finance.service.ReportService;
 import ru.vtvhw.spring.finance.service.TransactionService;
@@ -24,7 +25,6 @@ import static java.util.Objects.isNull;
 import static org.springframework.http.HttpHeaders.CONTENT_DISPOSITION;
 import static org.springframework.http.MediaType.APPLICATION_PDF_VALUE;
 import static ru.vtvhw.spring.finance.exception.ExportException.notSupported;
-import static ru.vtvhw.spring.finance.exception.ValidationException.invalidDateRange;
 
 @RestController
 @RequestMapping("/api/reports")

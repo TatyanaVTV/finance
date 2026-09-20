@@ -16,7 +16,6 @@ import ru.vtvhw.spring.finance.service.CategoryService;
 import java.util.List;
 import java.util.UUID;
 
-import static java.util.Objects.isNull;
 import static org.apache.logging.log4j.util.Strings.isBlank;
 import static ru.vtvhw.spring.finance.exception.FinanceSecurityException.categoryNotBelongToUser;
 import static ru.vtvhw.spring.finance.exception.ResourceNotFoundException.categoryNotFound;
