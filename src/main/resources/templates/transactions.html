@@ -108,6 +108,27 @@
         </tr>
         </tbody>
     </table>
+    <nav th:if="${page != null and page.totalPages > 1}" class="mt-3">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+                <a class="page-link" th:href="@{/transactions(page=${page.number - 1}, size=${page.size})}">←</a>
+            </li>
+
+            <li class="page-item"
+                th:each="i : ${#numbers.sequence(
+                T(java.lang.Math).max(0, page.number - 2),
+                T(java.lang.Math).min(page.totalPages - 1, page.number + 2))}"
+                th:classappend="${i == page.number} ? 'active'">
+                <a class="page-link"
+                   th:href="@{/transactions(page=${i}, size=${page.size})}"
+                   th:text="${i + 1}"></a>
+            </li>
+
+            <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+                <a class="page-link" th:href="@{/transactions(page=${page.number + 1}, size=${page.size})}">→</a>
+            </li>
+        </ul>
+    </nav>
 </div>
 
 <script th:inline="javascript">

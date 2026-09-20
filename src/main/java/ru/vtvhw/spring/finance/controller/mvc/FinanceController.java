@@ -2,6 +2,11 @@ package ru.vtvhw.spring.finance.controller.mvc;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,13 +24,16 @@ import ru.vtvhw.spring.finance.service.CategoryService;
 import ru.vtvhw.spring.finance.service.TransactionService;
 import ru.vtvhw.spring.finance.service.UserService;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
 
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 import static java.util.Objects.isNull;
 import static org.apache.logging.log4j.util.Strings.isBlank;
+import static org.springframework.data.domain.Sort.Direction.DESC;
 import static ru.vtvhw.spring.finance.enums.TransactionType.EXPENSE;
 import static ru.vtvhw.spring.finance.enums.TransactionType.INCOME;
 
@@ -33,6 +41,8 @@ import static ru.vtvhw.spring.finance.enums.TransactionType.INCOME;
 @RequiredArgsConstructor
 @Slf4j
 public class FinanceController {
+    private static final Pageable DEFAULT_TRANSACTION_PAGE =
+        PageRequest.of(0, 20, Sort.by(DESC, "date"));
 
     private final TransactionService transactionService;
     private final CategoryService categoryService;
@@ -45,9 +55,9 @@ public class FinanceController {
     @GetMapping("/dashboard")
     public String dashboard(Authentication auth, Model model) {
         var user = userService.getByEmail(auth.getName());
-        var now = LocalDateTime.now();
-        var startOfMonth = now.withDayOfMonth(1);
-        var endOfMonth = now.withDayOfMonth(now.toLocalDate().lengthOfMonth());
+        var today = LocalDate.now();
+        var startOfMonth = today.withDayOfMonth(1).atStartOfDay(); // от 00:00
+        var endOfMonth = today.withDayOfMonth(today.lengthOfMonth()).atTime(LocalTime.MAX); // до 23:59
 
         var income = transactionService.getTotalAmount(user.getId(), INCOME, startOfMonth, endOfMonth);
         var expense = transactionService.getTotalAmount(user.getId(), EXPENSE, startOfMonth, endOfMonth);
@@ -66,9 +76,17 @@ public class FinanceController {
      * Показывает список всех транзакций пользователя и форму для добавления новой.
      */
     @GetMapping("/transactions")
-    public String transactions(Authentication auth, Model model) {
+    public String transactions(
+            Authentication auth,
+            Model model,
+            @PageableDefault(size = 20, sort = "date", direction = DESC)
+            Pageable pageable
+    ) {
         var user = userService.getByEmail(auth.getName());
-        model.addAttribute("transactions", transactionService.getAllTransactionsForUser(user.getId()));
+        var page = transactionService.getAllTransactionsForUser(user.getId(), pageable);
+
+        model.addAttribute("transactions", page.getContent());
+        model.addAttribute("page", page);
         model.addAttribute("categories", categoryService.getCategoriesByUser(user.getId()));
         model.addAttribute("newTransaction", new TransactionDto());
         return "transactions";
@@ -89,14 +107,16 @@ public class FinanceController {
             transactionService.createTransaction(dto);
             return "redirect:/transactions";
         } catch (ValidationException e) {
-            var transactions = transactionService.getAllTransactionsForUser(user.getId());
+            var page = transactionService.getAllTransactionsForUser(user.getId(), DEFAULT_TRANSACTION_PAGE);
             var categories = categoryService.getCategoriesByUser(user.getId());
-            prepareCreationErrorModel(model, e.getMessage(), transactions, categories, dto);
+            prepareCreationErrorModel(model, e.getMessage(), page, categories, dto);
             return "transactions";
         } catch (Exception e) {
-            var transactions = transactionService.getAllTransactionsForUser(user.getId());
+            var page = transactionService.getAllTransactionsForUser(user.getId(), DEFAULT_TRANSACTION_PAGE);
             var categories = categoryService.getCategoriesByUser(user.getId());
-            prepareCreationErrorModel(model, "Ошибка при создании транзакции: " + e.getMessage(), transactions, categories, dto);
+            prepareCreationErrorModel(
+                    model, "Ошибка при создании транзакции: %s".formatted(e.getMessage()), page, categories, dto
+            );
             return "transactions";
         }
     }
@@ -174,12 +194,12 @@ public class FinanceController {
     }
 
     private void prepareCreationErrorModel(Model model, String errorMessage,
-                                           List<TransactionDto> transactions,
+                                           Page<TransactionDto> page,
                                            List<CategoryResponse> categories,
                                            TransactionDto dto) {
         var formattedDate = isNull(dto.getDate()) ? "" : dto.getDate().format(ISO_LOCAL_DATE_TIME);
         model.addAttribute("error", errorMessage);
-        model.addAttribute("transactions", transactions);
+        model.addAttribute("transactions", page.getContent());
         model.addAttribute("categories", categories);
         model.addAttribute("formattedDate", formattedDate);
         model.addAttribute("newTransaction", dto);

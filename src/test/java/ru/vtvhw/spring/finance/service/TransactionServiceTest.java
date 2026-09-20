@@ -2,6 +2,7 @@ package ru.vtvhw.spring.finance.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageRequest;
 import ru.vtvhw.spring.finance.dto.transaction.TransactionDto;
 import ru.vtvhw.spring.finance.entity.Category;
 import ru.vtvhw.spring.finance.entity.User;
@@ -421,14 +422,14 @@ public abstract class TransactionServiceTest {
         var category = createTestCategory("Salary", INCOME, user);
         transactionService.createTransaction(createTestTransactionDto(user, category, TEN, INCOME, "First"));
         transactionService.createTransaction(createTestTransactionDto(user, category, BigDecimal.valueOf(20), INCOME, "Second"));
-        var result = transactionService.getAllTransactionsForUser(user.getId());
-        assertEquals(2, result.size());
+        var page = transactionService.getAllTransactionsForUser(user.getId(), PageRequest.of(0, 20));
+        assertEquals(2, page.getContent().size());
     }
 
     @Test
     void getAllTransactionsForUser_EmptyList_ReturnsEmpty() {
         var user = createTestUser("User", "empty@example.com", "pass");
-        var result = transactionService.getAllTransactionsForUser(user.getId());
+        var result = transactionService.getAllTransactionsForUser(user.getId(), PageRequest.of(0, 20));
         assertTrue(result.isEmpty());
     }
 }

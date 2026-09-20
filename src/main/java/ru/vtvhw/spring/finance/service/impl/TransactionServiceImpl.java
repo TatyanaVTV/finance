@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.vtvhw.spring.finance.dto.transaction.TransactionDto;
@@ -102,23 +104,27 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional(readOnly = true)
     public List<TransactionDto> getTransactionsForUser(UUID userId, LocalDateTime from, LocalDateTime to) {
-        if (isNull(from) && isNull(to)) {
-            var now = LocalDateTime.now();
-            from = now.minusMonths(1);
-            to = now;
-        } else if (isNull(from)) {
-            from = to.minusMonths(1);
-        } else if (isNull(to)) {
-            to = from.plusMonths(1);
-        } else if (from.isAfter(to)) {
-            throw invalidDateRange();
-        }
+        from = normalizeFrom(from, to);
+        to = normalizeTo(from, to);
 
         var transactions = transactionRepository.findByUserIdAndDateBetweenOrderByDateDesc(userId, from, to);
         log.info("Getting transactions for user: from={}, to={}", from, to);
         return transactions.stream()
                 .map(transactionMapper::toDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<TransactionDto> getTransactionsForUser(UUID userId, LocalDateTime from, LocalDateTime to,
+                                                       Pageable pageable) {
+        from = normalizeFrom(from, to);
+        to = normalizeTo(from, to);
+
+        log.info("Getting transactions for user: from={}, to={}, pageNb={}, pageSize={}",
+                from, to, pageable.getPageNumber(), pageable.getPageSize());
+        return transactionRepository.findByUserIdAndDateBetween(userId, from, to, pageable)
+                .map(transactionMapper::toDto);
     }
 
     @Override
@@ -132,17 +138,18 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Cacheable(value = "totals", key = "#userId + ':' + #type + ':' + #from + ':' + #to")
     public BigDecimal getTotalAmount(UUID userId, TransactionType type, LocalDateTime from, LocalDateTime to) {
+        log.info("Getting total amount for userId={}, type={}, from={}, to={}", userId, type, from, to);
         var sum = transactionRepository.sumAmountByUserAndTypeAndDateRange(userId, type, from, to);
         return sum != null ? sum : ZERO;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<TransactionDto> getAllTransactionsForUser(UUID userId) {
-        var transactions = transactionRepository.findByUserIdOrderByDateDesc(userId);
-        return transactions.stream()
-                .map(transactionMapper::toDto)
-                .collect(Collectors.toList());
+    public Page<TransactionDto> getAllTransactionsForUser(UUID userId, Pageable pageable) {
+        log.info("Getting all transactions for userId={}, page#{}, page size={}",
+                userId, pageable.getPageNumber(), pageable.getPageSize());
+        return transactionRepository.findByUserId(userId, pageable)
+                .map(transactionMapper::toDto);
     }
 
     private User getUserOrThrow(UUID userId) {
@@ -184,6 +191,29 @@ public class TransactionServiceImpl implements TransactionService {
             }
         }
         return amount;
+    }
+
+    private LocalDateTime normalizeFrom(LocalDateTime from, LocalDateTime to) {
+        if (isNull(from) && isNull(to)) {
+            return LocalDateTime.now().minusMonths(1);
+        }
+        if (isNull(from)) {
+            return to.minusMonths(1);
+        }
+        if (!isNull(to) && from.isAfter(to)) {
+            throw invalidDateRange();
+        }
+        return from;
+    }
+
+    private LocalDateTime normalizeTo(LocalDateTime from, LocalDateTime to) {
+        if (isNull(from) && isNull(to)) {
+            return LocalDateTime.now();
+        }
+        if (isNull(to)) {
+            return from.plusMonths(1);
+        }
+        return to;
     }
 
     private void validateDescription(String description) {

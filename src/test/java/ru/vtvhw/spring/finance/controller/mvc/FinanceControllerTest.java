@@ -1,8 +1,11 @@
 package ru.vtvhw.spring.finance.controller.mvc;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -21,6 +24,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -64,7 +68,8 @@ public class FinanceControllerTest {
     @Test
     void transactions_ShouldReturnTransactionsView() throws Exception {
         when(userService.getByEmail("test@example.com")).thenReturn(user);
-        when(transactionService.getAllTransactionsForUser(userId)).thenReturn(List.of());
+        when(transactionService.getAllTransactionsForUser(eq(userId), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
         when(categoryService.getCategoriesByUser(userId)).thenReturn(List.of());
 
         mockMvc.perform(get("/transactions"))
@@ -92,7 +97,8 @@ public class FinanceControllerTest {
     @Test
     void addTransaction_ValidationException_ShouldReturnTransactionsViewWithError() throws Exception {
         when(userService.getByEmail("test@example.com")).thenReturn(user);
-        when(transactionService.getAllTransactionsForUser(userId)).thenReturn(List.of());
+        when(transactionService.getAllTransactionsForUser(eq(userId), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
         when(categoryService.getCategoriesByUser(userId)).thenReturn(List.of());
 
         doThrow(ValidationException.emptyDescription())
@@ -113,7 +119,8 @@ public class FinanceControllerTest {
     @Test
     void addTransaction_GenericException_ShouldReturnTransactionsViewWithError() throws Exception {
         when(userService.getByEmail("test@example.com")).thenReturn(user);
-        when(transactionService.getAllTransactionsForUser(userId)).thenReturn(List.of());
+        when(transactionService.getAllTransactionsForUser(eq(userId), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
         when(categoryService.getCategoriesByUser(userId)).thenReturn(List.of());
 
         doThrow(new RuntimeException("Database error"))
@@ -201,5 +208,25 @@ public class FinanceControllerTest {
                 .andExpect(model().attribute("error", "Пользователь с email 'taken@example.com' уже существует"))
                 .andExpect(model().attribute("name", "New Name"))
                 .andExpect(model().attribute("email", "taken@example.com"));
+    }
+
+    @Test
+    void transactions_WithPaginationParams_PassesPageableToService() throws Exception {
+        when(userService.getByEmail("test@example.com")).thenReturn(user);
+        when(transactionService.getAllTransactionsForUser(eq(userId), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+        when(categoryService.getCategoriesByUser(userId)).thenReturn(List.of());
+
+        mockMvc.perform(get("/transactions")
+                        .param("page", "2")
+                        .param("size", "5"))
+                .andExpect(status().isOk());
+
+        var captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(transactionService).getAllTransactionsForUser(eq(userId), captor.capture());
+
+        var pageable = captor.getValue();
+        assertThat(pageable.getPageNumber()).isEqualTo(2);
+        assertThat(pageable.getPageSize()).isEqualTo(5);
     }
 }
