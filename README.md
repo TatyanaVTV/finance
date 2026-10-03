@@ -11,7 +11,7 @@
 
 - **Backend:** Spring Boot, Spring MVC, Spring Data JPA, Hibernate, Spring Security (Basic Auth)
 - **Frontend:** Thymeleaf, Bootstrap 5, Chart.js, чистый JavaScript (без jQuery)
-- **База данных:** PostgreSQL (`dev`/`prod`), H2 (тесты)
+- **База данных:** PostgreSQL (`dev`/`prod`), H2 (тесты), Flyway
 - **Сборка:** Gradle (Kotlin DSL)
 - **Маппинг:** MapStruct
 - **Экспорт отчётов:** iText (PDF), Apache POI (Excel)
@@ -37,8 +37,11 @@ src/
 │   │   ├── mapper/               – MapStruct-мапперы
 │   │   ├── repository/           – Spring Data JPA репозитории
 │   │   ├── service/              – интерфейсы и реализации сервисов
+│   │   ├── validation/           – валидаторы
 │   │   └── FinanceApplication.java – точка входа
 │   └── resources/
+│       ├── db/
+│       │   └── migration/        – файлы миграций БД (Flyway)
 │       ├── application.yml       – общие настройки
 │       ├── application-dev.yml   – профиль разработки (PostgreSQL)
 │       ├── application-test.yml  – профиль тестов (H2)

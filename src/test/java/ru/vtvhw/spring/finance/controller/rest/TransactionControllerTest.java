@@ -2,12 +2,18 @@ package ru.vtvhw.spring.finance.controller.rest;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.vtvhw.spring.finance.dto.TransactionDto;
+import ru.vtvhw.spring.finance.dto.transaction.CreateTransactionRequest;
+import ru.vtvhw.spring.finance.dto.transaction.TransactionDto;
+import ru.vtvhw.spring.finance.dto.transaction.UpdateTransactionRequest;
 import ru.vtvhw.spring.finance.entity.Transaction;
 import ru.vtvhw.spring.finance.entity.User;
 import ru.vtvhw.spring.finance.exception.ResourceNotFoundException;
@@ -18,13 +24,15 @@ import ru.vtvhw.spring.finance.service.UserService;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import static java.math.BigDecimal.TEN;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.springframework.data.domain.Sort.Direction.ASC;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -33,7 +41,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static ru.vtvhw.spring.finance.enums.TransactionType.INCOME;
 import static ru.vtvhw.spring.finance.exception.FinanceSecurityException.transactionNotBelongToUser;
 import static ru.vtvhw.spring.finance.exception.ResourceNotFoundException.transactionNotFound;
-import static ru.vtvhw.spring.finance.exception.ValidationException.emptyDescription;
 
 @WebMvcTest(TransactionController.class)
 @WithMockUser(username = "test@example.com")
@@ -78,18 +85,30 @@ public class TransactionControllerTest {
         transactionDto.setType(INCOME);
         transactionDto.setDate(LocalDateTime.now());
         transactionDto.setDescription("Test");
+
+        when(transactionMapper.toDto(any(CreateTransactionRequest.class))).thenReturn(transactionDto);
+        when(transactionMapper.toDto(any(UpdateTransactionRequest.class))).thenReturn(transactionDto);
     }
 
     @Test
-    void getTransactions_WithoutParams_ShouldUseDefaultPeriod() throws Exception {
+    void getTransactions_WithoutParams_ReturnsAllForDefaultPeriod() throws Exception {
         when(userService.getByEmail("test@example.com")).thenReturn(user);
-        when(transactionService.getTransactionsForUser(eq(userId), any(LocalDateTime.class), any(LocalDateTime.class)))
-                .thenReturn(List.of(transactionDto));
+        when(transactionService.getTransactionsForUser(
+                eq(userId), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(
+                        List.of(transactionDto), PageRequest.of(0, 20), 1)
+                );
 
         mockMvc.perform(get("/api/transactions"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(transactionId.toString()))
-                .andExpect(jsonPath("$[0].amount").value(10));
+                .andExpect(jsonPath("$.content[0].id").value(transactionId.toString()))
+                .andExpect(jsonPath("$.content[0].amount").value(10))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(20))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.first").value(true))
+                .andExpect(jsonPath("$.last").value(true));
     }
 
     @Test
@@ -97,14 +116,17 @@ public class TransactionControllerTest {
         when(userService.getByEmail("test@example.com")).thenReturn(user);
         var from = LocalDateTime.now().minusDays(10);
         var to = LocalDateTime.now();
-        when(transactionService.getTransactionsForUser(eq(userId), any(LocalDateTime.class), any(LocalDateTime.class)))
-                .thenReturn(List.of(transactionDto));
+
+        when(transactionService.getTransactionsForUser(
+                eq(userId), any(LocalDateTime.class), any(LocalDateTime.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(transactionDto)));
 
         mockMvc.perform(get("/api/transactions")
                         .param("from", from.toString())
                         .param("to", to.toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(transactionId.toString()));
+                .andExpect(jsonPath("$.content[0].id").value(transactionId.toString()))
+                .andExpect(jsonPath("$.content[0].amount").value(10));
     }
 
     @Test
@@ -131,11 +153,7 @@ public class TransactionControllerTest {
     }
 
     @Test
-    void addTransaction_ValidationException_ShouldReturnBadRequest() throws Exception {
-        when(userService.getByEmail("test@example.com")).thenReturn(user);
-        doThrow(emptyDescription())
-                .when(transactionService).createTransaction(any(TransactionDto.class));
-
+    void addTransaction_EmptyDescription_ReturnsBadRequest() throws Exception {
         var json = """
                 {
                     "amount": 10,
@@ -149,7 +167,10 @@ public class TransactionControllerTest {
                         .content(json)
                         .with(csrf()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Описание не может быть пустым"));
+                .andExpect(jsonPath("$.error").value("Некорректные параметры запроса"))
+                .andExpect(jsonPath("$.fields.description").value("Описание обязательно"));
+
+        verify(transactionService, never()).createTransaction(any());
     }
 
     @Test
@@ -305,5 +326,26 @@ public class TransactionControllerTest {
         mockMvc.perform(get("/api/transactions/{id}", transactionId))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error").value("Транзакция '" + transactionId + "' не принадлежит указанному пользователю '" + userId + "'"));
+    }
+
+    @Test
+    void getTransactions_WithPaginationParams_PassesPageableToService() throws Exception {
+        when(userService.getByEmail("test@example.com")).thenReturn(user);
+        when(transactionService.getTransactionsForUser(eq(userId), any(), any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(transactionDto)));
+
+        mockMvc.perform(get("/api/transactions")
+                        .param("page", "2")
+                        .param("size", "5")
+                        .param("sort", "amount,asc"))
+                .andExpect(status().isOk());
+
+        var captor = ArgumentCaptor.forClass(Pageable.class);
+        verify(transactionService).getTransactionsForUser(eq(userId), any(), any(), captor.capture());
+
+        var pageable = captor.getValue();
+        assertThat(pageable.getPageNumber()).isEqualTo(2);
+        assertThat(pageable.getPageSize()).isEqualTo(5);
+        assertThat(Objects.requireNonNull(pageable.getSort().getOrderFor("amount")).getDirection()).isEqualTo(ASC);
     }
 }

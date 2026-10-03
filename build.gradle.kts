@@ -31,9 +31,14 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
 
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+    implementation("com.github.ben-manes.caffeine:caffeine")
+
     // Database
     implementation("org.postgresql:postgresql")
     testImplementation("com.h2database:h2")
+    implementation("org.flywaydb:flyway-core")
+    implementation("org.flywaydb:flyway-database-postgresql")
 
     // Lombok
     compileOnly("org.projectlombok:lombok")

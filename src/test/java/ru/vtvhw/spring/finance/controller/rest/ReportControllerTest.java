@@ -7,7 +7,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.vtvhw.spring.finance.dto.TransactionDto;
+import ru.vtvhw.spring.finance.dto.transaction.TransactionDto;
 import ru.vtvhw.spring.finance.entity.Report;
 import ru.vtvhw.spring.finance.entity.User;
 import ru.vtvhw.spring.finance.enums.ReportPeriod;
@@ -24,8 +24,7 @@ import java.util.UUID;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.APPLICATION_PDF;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -118,7 +117,12 @@ public class ReportControllerTest {
                         .param("format", PDF.name())
                         .with(csrf()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Дата начала не может быть позже даты окончания"));
+                .andExpect(jsonPath("$.error")
+                        .value("Некорректные параметры запроса"))
+                .andExpect(jsonPath("$.fields.form")
+                        .value("Дата начала не может быть позже даты окончания"));
+
+        verify(reportService, never()).generateReport(any(), any(), any(), any(), any());
     }
 
     @Test

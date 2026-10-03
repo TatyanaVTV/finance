@@ -2,9 +2,12 @@ package ru.vtvhw.spring.finance.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.vtvhw.spring.finance.dto.CategoryDto;
+import ru.vtvhw.spring.finance.dto.category.CategoryResponse;
 import ru.vtvhw.spring.finance.entity.Category;
 import ru.vtvhw.spring.finance.enums.TransactionType;
 import ru.vtvhw.spring.finance.mapper.CategoryMapper;
@@ -33,12 +36,19 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "categoriesByUser", key = "#userId"),
+            @CacheEvict(value = "categoriesByUserAndType", allEntries = true)
+    })
     public Category createCategory(String name, TransactionType type, UUID userId) {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> {
                     log.error("User not found for category creation: {}", userId);
                     return userNotFound(userId);
                 });
+        if (isBlank(name)) {
+            throw emptyCategoryName();
+        }
 
         if (categoryRepository.existsByNameAndUserId(name, userId)) {
             throw categoryAlreadyExists(name);
@@ -56,6 +66,10 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "categoriesByUser", key = "#userId"),
+            @CacheEvict(value = "categoriesByUserAndType", allEntries = true)
+    })
     public Category updateCategory(UUID id, String newName, UUID userId) {
         var category = getById(id);
         if (!category.getUser().getId().equals(userId)) {
@@ -76,6 +90,10 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "categoriesByUser", key = "#userId"),
+            @CacheEvict(value = "categoriesByUserAndType", allEntries = true)
+    })
     public void deleteCategory(UUID categoryId, UUID userId) {
         var category = getById(categoryId);
         if (!category.getUser().getId().equals(userId)) {
@@ -91,16 +109,20 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public List<CategoryDto> getCategoriesByUser(UUID userId) {
+    @Cacheable(value = "categoriesByUser", key = "#userId")
+    public List<CategoryResponse> getCategoriesByUser(UUID userId) {
+        log.info("Getting all categories for userId={}", userId);
         return categoryRepository.findByUserId(userId).stream()
-                .map(categoryMapper::toDto)
+                .map(categoryMapper::toResponse)
                 .toList();
     }
 
     @Override
-    public List<CategoryDto> getCategoriesByUserAndType(UUID userId, TransactionType type) {
+    @Cacheable(value = "categoriesByUserAndType", key = "#userId + ':' + #type")
+    public List<CategoryResponse> getCategoriesByUserAndType(UUID userId, TransactionType type) {
+        log.info("Getting all categories for userId={}, type={}", userId, type);
         return categoryRepository.findByUserIdAndType(userId, type).stream()
-                .map(categoryMapper::toDto)
+                .map(categoryMapper::toResponse)
                 .toList();
     }
 

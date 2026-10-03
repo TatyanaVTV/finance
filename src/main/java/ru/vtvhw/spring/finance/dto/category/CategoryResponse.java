@@ -1,4 +1,4 @@
-package ru.vtvhw.spring.finance.dto;
+package ru.vtvhw.spring.finance.dto.category;
 
 import lombok.Builder;
 import lombok.Data;
@@ -8,7 +8,7 @@ import java.util.UUID;
 
 @Data
 @Builder
-public class CategoryDto {
+public class CategoryResponse {
     private UUID id;
     private String name;
     private TransactionType type;

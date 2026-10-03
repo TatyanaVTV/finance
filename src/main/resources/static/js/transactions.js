@@ -73,9 +73,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        const colCount = row.children.length; // Количество колонок в исходной строке
+
         const editRow = document.getElementById('editTemplate').cloneNode(true);
         editRow.style.display = '';
         editRow.id = 'editRow-' + id;
+
         const saveBtn = editRow.querySelector('.save-edit-btn');
         saveBtn.dataset.id = id;
         editRow.querySelector('.cancel-edit-btn').dataset.id = id;
@@ -111,6 +114,21 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         row.replaceWith(editRow);
+
+        // Отдельная строка для ошибок под всей строкой редактирования
+        var errorRow = document.createElement('tr');
+        errorRow.id = 'editErrorRow-' + id;
+        errorRow.style.display = 'none';
+
+        var errorTd = document.createElement('td');
+        errorTd.colSpan = colCount;
+        errorTd.style.textAlign = 'center';
+        errorTd.style.color = '#d32f2f';
+        errorTd.style.padding = '8px';
+        errorTd.style.fontWeight = '500';
+
+        errorRow.appendChild(errorTd);
+        editRow.after(errorRow);
     }
 
     // ----- Обработчики -----
@@ -127,18 +145,18 @@ document.addEventListener('DOMContentLoaded', function() {
         enableEditing(row);
     });
 
-    // Сохранить
+    // ----- Сохранить -----
     document.addEventListener('click', function(e) {
         const saveBtn = e.target.closest('.save-edit-btn');
         if (!saveBtn) return;
         const editRow = saveBtn.closest('tr');
         const id = saveBtn.dataset.id;
 
-        // Удаляем предыдущее сообщение об ошибке
-        const errorDiv = editRow.querySelector('.edit-error');
-        if (errorDiv) {
-            errorDiv.textContent = '';
-            errorDiv.style.display = 'none';
+        // Скрыть предыдущую ошибку
+        const errorRow = document.getElementById('editErrorRow-' + id);
+        if (errorRow) {
+            errorRow.style.display = 'none';
+            errorRow.querySelector('td').textContent = '';
         }
 
         const amount = editRow.querySelector('.edit-amount').value;
@@ -169,6 +187,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         try {
                             const json = JSON.parse(text);
                             errorMsg = json.error || json.message || errorMsg;
+                            if (json.fields && Object.keys(json.fields).length > 0) {
+                                const fieldErrors = Object.values(json.fields).join('\n');
+                                errorMsg = `${errorMsg}:\n${fieldErrors}`;
+                            }
                         } catch (e) {
                             errorMsg = text || errorMsg;
                         }
@@ -177,24 +199,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(err => {
-                if (errorDiv) {
-                    errorDiv.textContent = err.message;
-                    errorDiv.style.display = 'block';
+                if (errorRow) {
+                    errorRow.querySelector('td').textContent = err.message;
+                    errorRow.style.display = '';
                 } else {
-                    // fallback – alert, если вдруг нет блока
                     alert(err.message);
                 }
             });
     });
 
-    // Отмена
+    // ----- Отменить -----
     document.addEventListener('click', function(e) {
         const cancelBtn = e.target.closest('.cancel-edit-btn');
         if (!cancelBtn) return;
         location.reload();
     });
 
-    // Удалить
+    // ----- Удалить -----
     document.addEventListener('click', function(e) {
         const deleteBtn = e.target.closest('.delete-btn');
         if (!deleteBtn) return;

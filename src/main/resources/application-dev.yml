@@ -15,3 +15,4 @@ security:
 logging:
   level:
     ru.vtvhw.spring.finance: DEBUG
+    org.springframework.cache: DEBUG

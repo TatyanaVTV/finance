@@ -1,21 +1,27 @@
 package ru.vtvhw.spring.finance.controller.rest;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import ru.vtvhw.spring.finance.dto.TransactionDto;
+import ru.vtvhw.spring.finance.dto.common.PageResponse;
+import ru.vtvhw.spring.finance.dto.transaction.CreateTransactionRequest;
+import ru.vtvhw.spring.finance.dto.transaction.TransactionDto;
+import ru.vtvhw.spring.finance.dto.transaction.UpdateTransactionRequest;
 import ru.vtvhw.spring.finance.mapper.TransactionMapper;
 import ru.vtvhw.spring.finance.service.TransactionService;
 import ru.vtvhw.spring.finance.service.UserService;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
-import static java.util.Objects.isNull;
+import static org.springframework.data.domain.Sort.Direction.DESC;
+import static org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME;
 
 @RestController
 @RequestMapping("/api/transactions")
@@ -32,21 +38,25 @@ public class TransactionController {
      * Используется для AJAX-обновления списка на страницах.
      */
     @GetMapping
-    public List<TransactionDto> getTransactions(Authentication auth,
-                                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-                                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+    public PageResponse<TransactionDto> getTransactions(
+            Authentication auth,
+            @RequestParam(required = false) @DateTimeFormat(iso = DATE_TIME) LocalDateTime from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DATE_TIME) LocalDateTime to,
+            @PageableDefault(size = 20, sort = "date", direction = DESC) Pageable pageable
+    ) {
         var user = userService.getByEmail(auth.getName());
-        if (isNull(from)) from = LocalDateTime.now().minusMonths(1);
-        if (isNull(to)) to = LocalDateTime.now();
-        return transactionService.getTransactionsForUser(user.getId(), from, to);
+        var page = transactionService.getTransactionsForUser(user.getId(), from, to, pageable);
+        return PageResponse.of(page);
     }
 
     /**
      * Добавление новой транзакции через AJAX (JSON).
      */
     @PostMapping
-    public TransactionDto addTransaction(Authentication auth, @RequestBody TransactionDto dto) {
+    public TransactionDto addTransaction(Authentication auth,
+                                         @Valid @RequestBody CreateTransactionRequest request) {
         var user = userService.getByEmail(auth.getName());
+        var dto = transactionMapper.toDto(request);
         dto.setUserId(user.getId());
         var created = transactionService.createTransaction(dto);
         return transactionMapper.toDto(created);
@@ -58,8 +68,9 @@ public class TransactionController {
     @PutMapping("/{id}")
     public TransactionDto updateTransaction(Authentication auth,
                                             @PathVariable UUID id,
-                                            @RequestBody TransactionDto dto) {
+                                            @Valid @RequestBody UpdateTransactionRequest request) {
         var user = userService.getByEmail(auth.getName());
+        var dto = transactionMapper.toDto(request);
         dto.setUserId(user.getId());
         var updated = transactionService.updateTransaction(id, dto);
         return transactionMapper.toDto(updated);

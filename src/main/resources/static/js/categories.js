@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    // Обработчик добавления категории
+    // ----- Добавление категории -----
     document.querySelectorAll('.add-category-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
             const type = this.dataset.type;
@@ -20,27 +20,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => {
                     if (response.ok) {
                         location.reload();
-                    } else {
-                        return response.text().then(text => {
-                            let errorMsg = text;
-                            try {
-                                const json = JSON.parse(text);
-                                if (json.error) errorMsg = json.error;
-                                else if (json.message) errorMsg = json.message;
-                            } catch (e) {
-                                // use text as is
-                            }
-                            throw new Error(errorMsg);
-                        });
+                        return;
                     }
+                    return response.text().then(text => {
+                        throw new Error(extractErrorMessage(text));
+                    });
                 })
-                .catch(err => {
-                    showError(err.message);
-                });
+                .catch(err => showError(err.message));
         });
     });
 
-    // Обработчик удаления категории
+    // ----- Удаление категории -----
     document.addEventListener('click', function(e) {
         const deleteBtn = e.target.closest('.delete-category-btn');
         if (!deleteBtn) return;
@@ -54,26 +44,16 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => {
                 if (response.ok) {
                     location.reload();
-                } else {
-                    return response.text().then(text => {
-                        let errorMsg = text;
-                        try {
-                            const json = JSON.parse(text);
-                            if (json.error) errorMsg = json.error;
-                            else if (json.message) errorMsg = json.message;
-                        } catch (e) {
-                            // use text as is
-                        }
-                        throw new Error(errorMsg);
-                    });
+                    return;
                 }
+                return response.text().then(text => {
+                    throw new Error(extractErrorMessage(text));
+                });
             })
-            .catch(err => {
-                showError(err.message);
-            });
+            .catch(err => showError(err.message));
     });
 
-    // Обработчик редактирования категории
+    // ----- Редактирование категории -----
     document.addEventListener('click', function(e) {
         const editBtn = e.target.closest('.edit-category-btn');
         if (!editBtn) return;
@@ -102,7 +82,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 restoreSpan(originalName);
                 return;
             }
-
             if (!newName) {
                 showError('Название категории не может быть пустым');
                 restoreSpan(originalName);
@@ -117,19 +96,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => {
                     if (response.ok) {
                         location.reload();
-                    } else {
-                        return response.text().then(text => {
-                            let errorMsg = text;
-                            try {
-                                const json = JSON.parse(text);
-                                if (json.error) errorMsg = json.error;
-                                else if (json.message) errorMsg = json.message;
-                            } catch (e) {
-                                // use text as is
-                            }
-                            throw new Error(errorMsg);
-                        });
+                        return;
                     }
+                    return response.text().then(text => {
+                        throw new Error(extractErrorMessage(text));
+                    });
                 })
                 .catch(err => {
                     showError(err.message);
@@ -157,17 +128,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Функции для показа сообщений
+    // ----- Показ сообщений -----
     function showError(message) {
         const alert = document.getElementById('errorAlert');
         if (alert) {
-            alert.textContent = message;
+            alert.innerHTML = message;
             alert.style.display = 'block';
             setTimeout(() => {
                 alert.style.display = 'none';
             }, 5000);
         } else {
-            alert('Ошибка: ' + message);
+            alert('Ошибка: ' + message.replace(/<[^>]+>/g, ''));
         }
     }
 
@@ -177,6 +148,36 @@ document.addEventListener('DOMContentLoaded', function() {
         alert.textContent = message;
         alert.style.display = 'block';
         setTimeout(() => { alert.style.display = 'none'; }, 3000);
+    }
+
+    // ----- Разбора ответа об ошибке -----
+    function extractErrorMessage(text) {
+        try {
+            const json = JSON.parse(text);
+
+            if (json.fields && typeof json.fields === 'object' && Object.keys(json.fields).length > 0) {
+                const title = escapeHtml(json.error || 'Ошибка валидации');
+                const items = Object.values(json.fields)
+                    .map(msg => `<li>${escapeHtml(msg)}</li>`)
+                    .join('');
+                return `<b>${title}</b><ul class="mb-0 mt-1">${items}</ul>`;
+            }
+
+            if (json.error)   return escapeHtml(json.error);
+            if (json.message) return escapeHtml(json.message);
+            return escapeHtml(text);
+        } catch (e) {
+            return escapeHtml(text);
+        }
+    }
+
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     window.showError = showError;

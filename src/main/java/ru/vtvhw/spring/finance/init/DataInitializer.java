@@ -7,7 +7,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import ru.vtvhw.spring.finance.dto.TransactionDto;
+import ru.vtvhw.spring.finance.dto.transaction.TransactionDto;
 import ru.vtvhw.spring.finance.entity.User;
 import ru.vtvhw.spring.finance.service.CategoryService;
 import ru.vtvhw.spring.finance.service.TransactionService;

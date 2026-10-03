@@ -2,7 +2,9 @@ package ru.vtvhw.spring.finance.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import ru.vtvhw.spring.finance.dto.TransactionDto;
+import ru.vtvhw.spring.finance.dto.transaction.CreateTransactionRequest;
+import ru.vtvhw.spring.finance.dto.transaction.TransactionDto;
+import ru.vtvhw.spring.finance.dto.transaction.UpdateTransactionRequest;
 import ru.vtvhw.spring.finance.entity.Transaction;
 
 @Mapper(componentModel = "spring")
@@ -18,4 +20,7 @@ public interface TransactionMapper {
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     Transaction toEntity(TransactionDto dto);
+
+    TransactionDto toDto(CreateTransactionRequest request);
+    TransactionDto toDto(UpdateTransactionRequest request);
 }
