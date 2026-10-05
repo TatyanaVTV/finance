@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function() {
             description: description
         };
 
-        fetch('/api/transactions/' + id, {
+        apiFetch('/api/transactions/' + id, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -225,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         if (confirm('Вы уверены, что хотите удалить эту транзакцию?')) {
-            fetch('/api/transactions/' + id, { method: 'DELETE' })
+            apiFetch('/api/transactions/' + id, { method: 'DELETE' })
                 .then(response => {
                     if (response.ok) {
                         location.reload();

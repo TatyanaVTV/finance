@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            fetch('/api/categories', {
+            apiFetch('/api/categories', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: name, type: type })
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!id) return;
         if (!confirm('Вы уверены, что хотите удалить эту категорию?')) return;
 
-        fetch('/api/categories/' + id, {
+        apiFetch('/api/categories/' + id, {
             method: 'DELETE'
         })
             .then(response => {
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            fetch('/api/categories/' + id, {
+            apiFetch('/api/categories/' + id, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newName })

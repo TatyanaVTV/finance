@@ -13,6 +13,9 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -44,6 +47,12 @@ public class SecurityConfig {
 
         if (csrfDisabled) {
             http.csrf(AbstractHttpConfigurer::disable);
+        } else {
+            http.csrf(csrf -> csrf
+                    .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()) // положить токен в cookie
+                    .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+            );
+            http.addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class);
         }
         return http.build();
     }

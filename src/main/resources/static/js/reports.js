@@ -79,7 +79,7 @@
         const errorAlert = document.getElementById('errorAlert');
         errorAlert.style.display = 'none';
 
-        fetch(url, {
+        apiFetch(url, {
             method: 'GET'
         })
             .then(response => {

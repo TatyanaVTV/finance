@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    fetch('/api/analytics/metrics')
+    apiFetch('/api/analytics/metrics')
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('chart').getContext('2d');
